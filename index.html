@@ -4387,19 +4387,26 @@ Object.assign(GLOSSARY, {
 const WIKI_ENTRIES = {
   // === ANLEITUNG ===
   anleitung: {
-    title: 'How Dramera works',
+    title: 'How the workbench works',
     category: 'anleitung',
-    definition: 'Dramera is a workbench for dramaturgs and writers. It separates gathering and ordering – so you can spin ideas freely before you structure them.',
-    importance: 'Most writing blocks arise because we want to be creative and to structure at the same time. Dramera gives you room for both – one after the other.',
+    definition: 'The workbench separates two working attitudes that otherwise get in each other\'s way: gathering and ordering. While you gather, nothing is structured. Only once enough material is there does the ordering begin.',
+    importance: 'Most writing blocks arise because we try to invent and to structure at the same time. The workbench gives both their own room – one after the other.',
     content: [
-      { heading: 'The surface', text: 'LEFT: material sidebar (requirements, characters, themes, scene ideas). CENTER: writing surface (Gathering) or timeline (Ordering). RIGHT: tools that develop the material. At the top you choose the phase.' },
-      { heading: 'The writing surface', text: 'FREE MODE: Write away, select text and extract it as a character/theme/scene. GUIDED MODE: 5 paths (character / 3-act structure / Hero\'s Journey / open form / theme) guide you with questions. All tools have "→ Writing surface" to carry ideas over.' },
-      { heading: 'The tools', text: 'Foundation (logline, conflict, core), Forces (fairy-tale model, archetypes), Theme (Value Square, motifs), Characters (biography, relationships, 5 Cornerstones), Situations, Space & time, Reflection, Research. Every category has prompting questions. Plus: character browser (16 archetypes), theme browser, situation finder (extended situation catalog), cliché browser.' },
-      { heading: 'The timeline', text: 'In "Ordering" you create scenes. Choose structure models (3-act, Hero\'s Journey, beginning-middle-end, 5-act, open form, free) or use the structure assistant. Scene ideas from the material can be dragged onto the timeline. Every scene can be assigned characters and themes.' },
-      { heading: 'AI dramaturg (optional)', text: 'With an Anthropic API key (Settings ⚙️): sparring partner for feedback (bottom right), deepen characters with AI, import text (AI extracts characters/themes/scenes from existing material). Everything works without a key – only the AI features are missing.' },
-      { heading: 'Save & export', text: 'Auto-save: your project is saved automatically in the browser (✓ top right). BUT: clear the cache or switch browsers and it is gone! Reliable backups: Export → Save project (JSON). Other exports: archive, treatment, play text, funding dossier (Word).' }
+      { heading: 'The basic idea', text: 'Three tabs sit at the top: **📝 Gather**, **🎬 Order** and **📄 Desk**. You begin on the left and work your way right, but you can jump back at any time – the three tabs are not stages you complete, they are three points of view on the same project.\n\nNext to them are a few buttons that apply everywhere: **📚 Wiki** opens the reference work on all dramaturgical terms, **❓** this manual, **💭** a tool for a feeling that has no name yet, and the Rebu button transfers the project to the prompt book. If an API key is stored, **🎭 Dramaturg** appears as well – a full-screen workspace in which you develop the play in conversation.' },
+      { heading: 'Gather: the writing surface', text: 'An empty writing surface lies in the middle. Here you write down the story you have in your head, or just single ideas, sentences, fragments. There is no formal requirement.\n\nThe real trick is the **right-click**. Select a word or a group of words, right-click it, and a small menu offers three options: **👤 Add to material as character**, **🎬 Add to material as scene** and **💡 Add to material as theme**. The buttons **+ Character**, **+ Theme** and **+ Scene** above the writing surface do the same.\n\nWhatever you define this way appears immediately on the left under **MATERIAL**, sorted into characters, themes and scene ideas. A continuous text turns into an ordered collection bit by bit, without ever having to leave the text. If you prefer typing straight into the left column, you can do that too.\n\nScene ideas are the most important category for the next step: anything you can picture as a situation will later be dragged onto the timeline. It pays to collect many of them in this phase, half-finished ones included.' },
+      { heading: 'Free and Guided', text: 'Above the writing surface is a switch between **Free** and **Guided**. Free is the empty surface.\n\nIf you still know very little, switch to Guided. Five starting points appear, and you choose the one that matches your situation:\n\n**A – Character-driven** (12 questions). The ensemble comes first. Who are these people, what binds them, what divides them?\n\n**B – Structure (3-act)** (15 questions). The arc of the action is in the foreground, plot-oriented.\n\n**C – Hero\'s Journey** (14 questions). Campbell and Vogler, mythic. For material that follows a journey of transformation.\n\n**D – Open form** (10 questions). For plays beyond closed dramaturgy: voices, text surfaces, montage.\n\n**E – Theme-driven** (number of questions depends on the variant). The subject, an abstract theme or a value comes first. This path branches once more into three variants.\n\nYou work through the questionnaire – it does not want correct answers, it wants to set thinking in motion – and then switch back to Free. The answers now stand as text on the writing surface, ready to be reworked and turned into material by right-click. The guided mode is therefore not a separate place but a supply line to the writing surface.' },
+      { heading: 'The tools on the right', text: 'The tool column on the right holds nine groups. You do not have to work through them in order – you open what you need. Almost every group begins with **Prompting questions** that open the way in before you fill anything out.\n\n**🧠 Foundation** clarifies the core of the story: requirements, author, title and tagline, the **Logline** – the material in a single sentence –, the core of the story, the unspeakable, and the emotional movement, meaning the curve the audience travels.\n\n**🌍 Space & time** asks where and when the play happens: setting, time, plus music and sound as part of the space.\n\n**💡 Theme & values** pushes toward the question of what it is actually about. Besides theme and motifs, the **Value Square** sits here: it spans a value and its counter-value along with their exaggerations, and so shows where the conflict of a piece really lies. Motif chains and subject research round the group off.\n\n**⚔️ Conflict & forces** deals with the central conflict and the forces behind it: the conflict itself, tension, the **force diagram**, the **fairy-tale model** after Propp, the **archetypes** and the intrigue.\n\n**👤 Characters** is the largest group: the character sheet, biography, relationships, a **relationship network** that shows the constellation graphically, and the **5 cornerstones**. There is also a character browser with sixteen archetypes to draw on when a role is still pale.\n\n**🎲 Situations** asks in which situations the characters show themselves: the scene sheet, the secrets – who keeps what from whom – and the **gap finder**, which points to places where the story does not yet hold. Polti\'s 36 dramatic situations are stored here as well.\n\n**🌀 Open form** is there for everything beyond closed dramaturgy: speaking instances instead of characters, text surfaces, material collage, language work and performativity.\n\n**📝 Documentation** turns what you have gathered into documents: a working version of the treatment, the finished treatment and the funding dossier.\n\n**📚 Research** is the place for everything that inspires – images, links, texts – plus a parking space for ideas that do not belong anywhere yet.\n\nWhatever you write in a tool stays saved in the project and reappears later in the exports. Results can also be carried straight over to the writing surface.' },
+      { heading: 'Order: choosing the model', text: 'As soon as there is enough material and above all enough scene ideas, you switch to **🎬 Order**. A dropdown of structure models appears at the top right: **Beginning – middle – end** as the simplest form of any story, **3-act structure** as classical dramaturgy, **5-act (Freytag)**, **The Hero\'s Journey** with its twelve stations of transformation, **8 sequences**, where each sequence is a small play in itself, **Epic Theatre** after Brecht with estrangement and interruption instead of empathy, **Episodic structure** for loosely connected episodes, **Open form**, where you name the sections yourself, and free arrangement with no grid at all.\n\nThe choice changes the **colour bar** above the timeline. Every model brings its own sections, each with a name, a share of the total length, a colour and a short explanation. A five-act play shows five fields in different proportions from a three-act one. The bar is not a constraint but an orientation: it shows which part of the structure a scene sits in and whether a section is overfull or empty.\n\nBeside it stands **🧭 Structure help** – a questionnaire that helps with the question of which model fits the material. An **ℹ️** opens the wiki article on the chosen model; with open form an **✏️** appears as well, letting you name the sections yourself.' },
+      { heading: 'The timeline', text: 'You now drag the scene ideas from the material column onto the timeline. This is where the shape of the story emerges: order, weight, rhythm. Scenes can be moved until the sequence is right; a scene that turns out to be miscast goes back into the pool with **↩️ Back to ideas**, without being lost.' },
+      { heading: 'Tracking', text: 'The **👁️ Tracking** bar sits above the timeline. It answers questions you otherwise only notice in the finished text, when it is too late: does a character appear in the middle section at all? Does a theme disappear after the halfway mark?\n\nYou first choose the mode – **Track characters** or **Track themes** – and then add individual entries via **+ Add character** or **+ Add theme**. Every selection appears as a coloured tag, and a trace runs beneath the scenes showing where that character appears or how that theme develops. Multiple selection is possible, so two characters can be compared directly. **Off** hides it all again.' },
+      { heading: 'The edit field', text: 'Clicking a scene on the timeline opens **Edit field** on the right.\n\nThe **title** of the scene stands at the top. Below it the button **🧭 Guided scene development**, which leads step by step through dramaturgical questions about this particular scene. Then the **Summary**, then **Status** – from the bare idea to the finished scene –, and finally **Characters** and **Themes**: who appears, what it is about. You fill both by clicking the corresponding entries in the material column; they then appear as small tags and can be removed one at a time.\n\nThree collapsible areas sit below. **🎭 Dramaturgy** holds the craft: **🎯 Goal** – what does the main character want to achieve here –, **⚡ Resistance** – what stands in the way – and **🔄 Turning point** – the moment everything tips; an **ℹ️** there opens the five dialogue principles. If characters are assigned to the scene, a line per character appears in which you enter what that character wants in this scene, along with a dropdown of conversation types. This is where it is decided whether a scene works – if everyone wants the same thing, nothing happens.\n\n**📝 Notes** is the free space for anything you want to remember about the scene. **👥 Character tracking** shows which characters are in this scene and lets you record their state scene by scene – the counterpart to the tracking bar, which shows the same thing across all scenes.' },
+      { heading: 'Dialogue and the format templates', text: 'In the middle, beneath the timeline, lies the surface on which the actual text is written. It works with format templates that you do not assign with the mouse but with the Escape key and a letter. A small box at the bottom right permanently shows the overview:\n\n**F** Character name · **D** Dialogue · **R** Stage direction · **T** Scene title · **A** Act title · **L** Song · **V** Verse · **P** Pause · **N** Normal\n\nIn addition, **K** copies the format of the current line and **E** applies it elsewhere. Without shortcuts, available only through the dropdown, there are secondary text, music, sound and note – the note being a directing remark that does not appear in print.\n\nThe point of these templates is not the look but the structure: because the app knows what is a character name and what is dialogue, it can export the text cleanly, hand it over to the prompt book and count speaking shares.' },
+      { heading: 'The desk', text: 'The third tab shows the same play as a single continuous document, set like an A4 page: title page with the title of the play, the logline as subtitle and the author\'s name, then the cast list, then the text scene by scene.\n\nHere you write and edit in context instead of scene by scene. The same format templates apply, the same Escape logic. A bar continuously shows where in the play you are. Two buttons sit at the top right: **PDF** prints the version as a PDF, **DOCX** exports it as a Word file.\n\nThe desk is the place for the last pass – when the structure holds and only the language is left.' },
+      { heading: 'The project menu', text: 'At the very top left, above the material column, a button with a folder icon and the project name opens the project menu.\n\nUnder **📁 PROJECT**: **📄 New...** creates an empty project. **🎭 Demo: Romeo & Juliet** loads a fully worked-out example project – the fastest way to see what a filled project looks like before starting your own. **💾 Save** (⌘S) saves the project. **🔄 Open, save as & share...** opens the import/export window. **⚙️ Settings...** leads among other things to the API key for the AI features.' },
+      { heading: 'Saving, opening, sharing', text: 'Everything to do with files comes together in the import/export window.\n\n**💾 Save as file** writes the whole project into a file ending in .dramera.json – the safe format, with which nothing is lost. **📂 Open project** loads a project or an older backup back in. **📦 Everything as ZIP** packs the project including its version history into an archive. **🧩 Export structure only** outputs merely the field names and keys of all tools, without content – a few kilobytes, meant for cases where valid entries are to be written from outside.\n\n**🤖 Import with AI** analyses an existing text, a PDF or a Word file and extracts characters, scenes and themes from it; this requires a stored API key.\n\n**⚡ Open in Rebu** transfers the project straight to the prompt book. A second route exports it in the shared exchange format that the rehearsal planner reads too.\n\nOne thing to understand: the workbench runs entirely in the browser. There is no server holding the projects. Whatever is to be kept must be saved as a file – which is why «Save as file» sits at the top of the import/export window, marked in green.' },
+      { heading: 'Documents', text: 'The lower part of the project menu produces documents from the project. **📝 Play text** outputs the text of the play. **📋 Treatment (from project)** builds a treatment from the filled-in tools. **📚 Research (as document)** assembles the collected research material. **🗂️ Full overview (Word)** exports absolutely everything – every field and every scene – as a Word document; this is the complete backup for reading through. **📑 Funding dossier** opens an assistant that puts together a dossier for funding applications from the project.' }
     ],
-    questions: ['Have you backed up your project as JSON?', 'Which tool could help you now?', 'Have you used the "→ Writing surface" button yet?'],
+    questions: ['Have you saved your project as a file?', 'Have you gathered enough scene ideas to start ordering?', 'Which tool could help you further right now?'],
     seeAlso: ['szene', 'figur', 'logline', 'konflikt', 'archetypen', 'wertequadrat', 'heldenreise']
   },
   
@@ -10102,7 +10109,7 @@ const SituationsfinderTool = ({ onSelect, selectedSituations, onAddToSchreibflae
         <p className="tool-desc">{SITUATIONS_CATALOG[category].description}</p>
       )}
       
-      {search && <p className="tool-desc">{filteredSituations.length} Treffer</p>}
+      {search && <p className="tool-desc">{filteredSituations.length} matches</p>}
       
       <div className="situationen-list">
         {filteredSituations.map((s, i) => (
@@ -10119,7 +10126,7 @@ const SituationsfinderTool = ({ onSelect, selectedSituations, onAddToSchreibflae
       
       {hasContent && (
         <div className="selected-situationen">
-          <strong>Ausgewählt ({selectedSituations.length}):</strong>
+          <strong>Selected ({selectedSituations.length}):</strong>
           <div className="selected-list">
             {selectedSituations.map((s, i) => (
               <span key={i} className="selected-tag">{s.title}</span>
@@ -26271,7 +26278,7 @@ STYLE:
             <div className="sidebar-menu-section">📁 PROJECT</div>
             <button className="sidebar-menu-item" onClick={() => { newProject(); setShowMenu(false); }}>📄 New...</button>
             <button className="sidebar-menu-item" onClick={() => { loadDemo(); setShowMenu(false); }}>🎭 Demo: Romeo & Juliet</button>
-            <button className="sidebar-menu-item" onClick={() => { saveToFile(); setShowMenu(false); }}>{'\ud83d\udcbe'} Sichern <span style={{float:'right',color:'#999',fontSize:'0.8em'}}>{'\u2318'}S</span></button>
+            <button className="sidebar-menu-item" onClick={() => { saveToFile(); setShowMenu(false); }}>{'\ud83d\udcbe'} Save <span style={{float:'right',color:'#999',fontSize:'0.8em'}}>{'\u2318'}S</span></button>
 
             <div className="sidebar-menu-divider" />
 
@@ -36149,6 +36156,31 @@ STYLE:
           cursor: text;
         }
 
+        /* ============================================================
+           KOMPAKTE KOPFLEISTE (04.08.2026)
+           Die Leiste lief nach rechts aus dem Fenster, sodass die
+           Strukturauswahl erst nach dem Schieben sichtbar wurde. Schrift
+           und Abstaende sind hier rund 15 % kleiner gesetzt. Links darf
+           gekuerzt werden (min-width 0), rechts wird nichts gestaucht.
+           Dieser Block steht bewusst am Ende der Stilangaben, damit er
+           die weiter oben stehenden Regeln ueberschreibt.
+           ============================================================ */
+        .header { padding: 0.55rem 0.8rem; gap: 0.75rem; }
+        .header-left { flex: 0 1 auto; min-width: 0; overflow: hidden; gap: 0.5rem; }
+        .header-right { flex: 0 0 auto; gap: 0.5rem; }
+        .project-name { font-size: 0.82rem; max-width: 200px; }
+        .phase-tabs { padding: 3px; }
+        .phase-tab { padding: 0.38rem 0.7rem; font-size: 0.78rem; }
+        .wiki-btn { padding: 0.38rem 0.7rem; font-size: 0.78rem; margin-left: 0.75rem; white-space: nowrap; }
+        .gefuehl-btn, .help-btn { padding: 0.3rem 0.45rem; font-size: 0.8rem; margin-left: 0.35rem; }
+        .rebu-twin-btn { padding: 0.3rem 0.6rem; font-size: 0.72rem; margin-left: 0.35rem; }
+        .rebu-twin-btn .twin-icon { font-size: 0.85rem; }
+        .raster-controls { display: flex; align-items: center; gap: 0.4rem; }
+        .raster-select { padding: 0.3rem 0.45rem; font-size: 0.78rem; max-width: 170px; }
+        .strukturhilfe-btn { padding: 0.3rem 0.55rem; font-size: 0.72rem; white-space: nowrap; }
+        .raster-info-btn, .raster-edit-btn { padding: 0.25rem 0.4rem; font-size: 0.78rem; }
+        .file-status { font-size: 10px; }
+
         /* Print styles */
         @media print {
           .schreibtisch-nav, .schreibtisch-topbar, .schreibtisch-insert-bar,
@@ -36236,25 +36268,27 @@ STYLE:
               {saveStatus === 'saving' && '\u23f3'}
               {saveStatus === 'error' && '\u26a0\ufe0f'}
             </span>
-            <span className="file-status" style={{fontSize: '11px', color: '#888', marginLeft: '10px', whiteSpace: 'nowrap'}}>
+            {/* Kompakte Dateianzeige: nur Zustand und Uhrzeit. Der ganze
+                Dateiname stand frueher hier und hat die Kopfleiste nach rechts
+                geschoben; er steckt jetzt im title und erscheint beim
+                Draufzeigen. */}
+            <span className="file-status" style={{fontSize: '11px', color: '#888', marginLeft: '10px', whiteSpace: 'nowrap'}}
+              title={filePath ? (filePath + (fileIsDirty ? ' \u2013 edited, not saved yet' : ' \u2013 saved')) : 'No file yet. The project lives in the browser only.'}>
               {filePath ? (
-                <>
-                  <span style={{color: '#aaa'}}>{'\ud83d\udcc4'}</span> {filePath}
-                  {fileIsDirty ? (
-                    <span style={{color: '#e8a838'}}> {'\u25cf'} Bearbeitet</span>
-                  ) : (
-                    <span style={{color: '#4a9'}}> {'\u2713'} Gesichert{lastFileSaveTime ? (' ' + lastFileSaveTime.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})) : ''}</span>
-                  )}
-                </>
+                fileIsDirty ? (
+                  <span style={{color: '#e8a838'}}>{'\u25cf'} Edited</span>
+                ) : (
+                  <span style={{color: '#4a9'}}>{'\u2713'}{lastFileSaveTime ? (' ' + lastFileSaveTime.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})) : ' Saved'}</span>
+                )
               ) : (
-                <span style={{color: '#999'}}>Nur im Browser{fileIsDirty ? '\u25cf Not saved' : ''}</span>
+                <span style={{color: '#999'}}>{'\u25cb'} Browser only</span>
               )}
             </span>
-            {/* Speicherplatz-Warnung */}
+            {/* Speicherplatz-Warnung \u2013 nur noch als Zeichen, Zahlen im title */}
             {(() => {
               const mb = parseFloat(getStorageUsageMB());
-              if (mb > 4.0) return <span style={{fontSize:'10px',color:'#dc2626',marginLeft:'8px'}} title="localStorage almost full! Please export a backup.">{'\ud83d\udcbe'} {mb}/5 MB</span>;
-              if (mb > 3.0) return <span style={{fontSize:'10px',color:'#e8a838',marginLeft:'8px'}} title="localStorage usage">{'\ud83d\udcbe'} {mb} MB</span>;
+              if (mb > 4.0) return <span style={{fontSize:'11px',color:'#dc2626',marginLeft:'6px',cursor:'default'}} title={'Storage almost full (' + mb + ' of 5 MB). Please export a backup.'}>{'\u26a0'}</span>;
+              if (mb > 3.0) return <span style={{fontSize:'11px',color:'#e8a838',marginLeft:'6px',cursor:'default'}} title={'Storage used: ' + mb + ' of 5 MB'}>{'\ud83d\udcbe'}</span>;
               return null;
             })()}
           </div>
@@ -37796,7 +37830,7 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                         className="collapsible-header"
                         onClick={() => setSidebarSections(s => ({ ...s, dramaturgie: !s.dramaturgie }))}
                       >
-                        <span>{sidebarSections.dramaturgie ? '▼' : '▶'} 🎭 Dramaturgie</span>
+                        <span>{sidebarSections.dramaturgie ? '▼' : '▶'} 🎭 Dramaturgy</span>
                         <span className="collapsible-hint">Goal, resistance, turning point...</span>
                       </button>
                       
@@ -37831,7 +37865,7 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                           {/* Wendepunkt */}
                           <div className="feld-section szene-dramaturgie">
                             <label className="feld-label">
-                              🔄 Wendepunkt
+                              🔄 Turning point
                               <button 
                                 className="info-icon-btn" 
                                 onClick={() => setShowDialogTipps(!showDialogTipps)}
@@ -37925,7 +37959,7 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                         className="collapsible-header"
                         onClick={() => setSidebarSections(s => ({ ...s, notizen: !s.notizen }))}
                       >
-                        <span>{sidebarSections.notizen ? '▼' : '▶'} 📝 Notizen</span>
+                        <span>{sidebarSections.notizen ? '▼' : '▶'} 📝 Notes</span>
                       </button>
                       
                       {sidebarSections.notizen && (
@@ -37948,7 +37982,7 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                           className="collapsible-header"
                           onClick={() => setSidebarSections(s => ({ ...s, tracking: !s.tracking }))}
                         >
-                          <span>{sidebarSections.tracking ? '▼' : '▶'} 👥 Figuren-Tracking ({ausgewaehltesFeld?.figuren?.length})</span>
+                          <span>{sidebarSections.tracking ? '▼' : '▶'} 👥 Character tracking ({ausgewaehltesFeld?.figuren?.length})</span>
                         </button>
                         
                         {sidebarSections.tracking && (
@@ -38508,8 +38542,8 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                       <div>
                         <div style={{fontWeight:500,fontSize:'0.82rem',color:'#5b21b6'}}>⚡ Open in Rebu</div>
                         <div style={{fontSize:'0.7rem',color:'#666',marginTop:'2px'}}>
-                          Projekt direkt ans Regiebuch übertragen
-                          {twinSyncStatus?.lastSync && <span style={{marginLeft:'0.5rem',color:'#8b5cf6'}}> · Letzter Sync: {getTwinSyncText()}</span>}
+                          Transfer the project straight to the prompt book
+                          {twinSyncStatus?.lastSync && <span style={{marginLeft:'0.5rem',color:'#8b5cf6'}}> · Last sync: {getTwinSyncText()}</span>}
                         </div>
                       </div>
                       <span style={{fontSize:'1.1rem'}}>🎭</span>
@@ -38842,7 +38876,7 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
                   setShowOnboarding(false);
                   localStorage.setItem('dramera-onboarding-done', 'true');
                 }}>
-                  📝 Neues Projekt starten
+                  📝 Start a new project
                 </button>
                 <button className="btn-secondary" onClick={() => {
                   loadDemo();
