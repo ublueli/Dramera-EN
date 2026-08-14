@@ -4403,7 +4403,7 @@ const WIKI_ENTRIES = {
       { heading: 'Dialogue and the format templates', text: 'In the middle, beneath the timeline, lies the surface on which the actual text is written. It works with format templates that you do not assign with the mouse but with the Escape key and a letter. A small box at the bottom right permanently shows the overview:\n\n**F** Character name · **D** Dialogue · **R** Stage direction · **T** Scene title · **A** Act title · **L** Song · **V** Verse · **P** Pause · **N** Normal\n\nIn addition, **K** copies the format of the current line and **E** applies it elsewhere. Without shortcuts, available only through the dropdown, there are secondary text, music, sound and note – the note being a directing remark that does not appear in print.\n\nThe point of these templates is not the look but the structure: because the app knows what is a character name and what is dialogue, it can export the text cleanly, hand it over to the prompt book and count speaking shares.' },
       { heading: 'The desk', text: 'The third tab shows the same play as a single continuous document, set like an A4 page: title page with the title of the play, the logline as subtitle and the author\'s name, then the cast list, then the text scene by scene.\n\nHere you write and edit in context instead of scene by scene. The same format templates apply, the same Escape logic. A bar continuously shows where in the play you are. Two buttons sit at the top right: **PDF** prints the version as a PDF, **DOCX** exports it as a Word file.\n\nThe desk is the place for the last pass – when the structure holds and only the language is left.' },
       { heading: 'The project menu', text: 'At the very top left, above the material column, a button with a folder icon and the project name opens the project menu.\n\nUnder **📁 PROJECT**: **📄 New...** creates an empty project. **🎭 Demo: Romeo & Juliet** loads a fully worked-out example project – the fastest way to see what a filled project looks like before starting your own. **💾 Save** (⌘S) saves the project. **🔄 Open, save as & share...** opens the import/export window. **⚙️ Settings...** leads among other things to the API key for the AI features.' },
-      { heading: 'Saving, opening, sharing', text: 'Everything to do with files comes together in the import/export window.\n\n**💾 Save as file** writes the whole project into a file ending in .dramera.json – the safe format, with which nothing is lost. **📂 Open project** loads a project or an older backup back in. **📦 Everything as ZIP** packs the project including its version history into an archive. **🧩 Export structure only** outputs merely the field names and keys of all tools, without content – a few kilobytes, meant for cases where valid entries are to be written from outside.\n\n**🤖 Import with AI** analyses an existing text, a PDF or a Word file and extracts characters, scenes and themes from it; this requires a stored API key.\n\n**⚡ Open in Rebu** transfers the project straight to the prompt book. A second route exports it in the shared exchange format that the rehearsal planner reads too.\n\nOne thing to understand: the workbench runs entirely in the browser. There is no server holding the projects. Whatever is to be kept must be saved as a file – which is why «Save as file» sits at the top of the import/export window, marked in green.' },
+      { heading: 'Saving, opening, sharing', text: 'Everything to do with files comes together in the import/export window.\n\n**💾 Save as file** writes the whole project into a file ending in .dramera.json – the safe format, with which nothing is lost. **📂 Open project** loads a project or an older backup back in. **📦 Everything as ZIP** packs the project including its version history into an archive. **🧩 Export structure only** outputs merely the field names and keys of all tools, without content – a few kilobytes, meant for cases where valid entries are to be written from outside.\n\n**🤖 Import with AI** analyses an existing text, a PDF or a Word file and extracts characters, scenes and themes from it; this requires a stored API key.\n\n**⚡ Open in Rebu** transfers the project straight to the prompt book. A second route exports it in the shared exchange format that the rehearsal planner reads too.\n\n**☁️ Google Drive** has its own section further down in the same window. Connect once and choose a folder, and the workbench writes exchange file and backup straight into that shared folder and loads projects back from it. While Drive is connected it also uploads a backup on its own every five minutes into Dramera/Backups, keeping the last twenty states.\n\nOne thing to understand: there is no Dramera server holding the projects. As long as nothing is saved, the project lives in the browser storage alone. It is written there continuously and automatically – twice over, in local storage and in a browser database from which the workbench can offer a lost project back – but that storage is small and disappears the moment browser data is cleared or the device changes. Which is why **💾 Save as file** sits at the top, marked in green.\n\nSaving to a file is a one-time act, though, not a chore to repeat. Once the project has been written into a file, the workbench keeps that file current itself: it writes back every thirty seconds as soon as anything has changed. This works in Chrome and Edge; Firefox and Safari do not know the necessary file access, so there every save downloads a fresh copy that you have to keep track of yourself. The header on the left tells you where you stand: an orange dot means edited, a green tick with a time means saved, an empty circle means no file exists yet. If the last backup is more than a week old, the workbench reminds you.' },
       { heading: 'Documents', text: 'The lower part of the project menu produces documents from the project. **📝 Play text** outputs the text of the play. **📋 Treatment (from project)** builds a treatment from the filled-in tools. **📚 Research (as document)** assembles the collected research material. **🗂️ Full overview (Word)** exports absolutely everything – every field and every scene – as a Word document; this is the complete backup for reading through. **📑 Funding dossier** opens an assistant that puts together a dossier for funding applications from the project.' }
     ],
     questions: ['Have you saved your project as a file?', 'Have you gathered enough scene ideas to start ordering?', 'Which tool could help you further right now?'],
@@ -17933,6 +17933,13 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
   const quillEditors = useRef({});
   const lastSyncedContent = useRef({});
   const [quillReady, setQuillReady] = useState(!!window.__quillLoaded);
+  // === SUCHEN UND ERSETZEN ===
+  const [suchOffen, setSuchOffen] = useState(false);
+  const [suchText, setSuchText] = useState('');
+  const [ersetzText, setErsetzText] = useState('');
+  const [suchIndex, setSuchIndex] = useState(0);
+  const [suchGrossKlein, setSuchGrossKlein] = useState(false);
+  const [suchRefresh, setSuchRefresh] = useState(0);
 
   // Szenen nach Position sortiert
   const sortedFelder = useMemo(() =>
@@ -18182,6 +18189,74 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
     };
   }, []);
 
+  // === FIND AND REPLACE across all scene editors ===
+  const trefferListe = useMemo(() => {
+    const q = suchText;
+    if (!q) return [];
+    const treffer = [];
+    sortedFelder.forEach(feld => {
+      const ed = quillEditors.current[feld.id];
+      if (!ed || !ed.getText) return;
+      const text = ed.getText();
+      const heu = suchGrossKlein ? text : text.toLowerCase();
+      const nadel = suchGrossKlein ? q : q.toLowerCase();
+      let von = 0;
+      let i = heu.indexOf(nadel, von);
+      while (i !== -1) {
+        treffer.push({ sceneId: feld.id, index: i, len: nadel.length });
+        von = i + nadel.length;
+        i = heu.indexOf(nadel, von);
+      }
+    });
+    return treffer;
+  }, [suchText, suchGrossKlein, sortedFelder, quillReady, suchRefresh]);
+
+  const springeZuTreffer = useCallback((n) => {
+    const liste = trefferListe;
+    if (!liste.length) return;
+    const i = ((n % liste.length) + liste.length) % liste.length;
+    const t = liste[i];
+    const ed = quillEditors.current[t.sceneId];
+    if (!ed) return;
+    setSuchIndex(i);
+    setActiveSceneId(t.sceneId);
+    const el = sceneRefs.current[t.sceneId];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      try { ed.focus(); ed.setSelection(t.index, t.len); } catch (e) {}
+    }, 80);
+  }, [trefferListe]);
+
+  const ersetzeEinen = useCallback((t) => {
+    const ed = quillEditors.current[t.sceneId];
+    if (!ed) return false;
+    let fmt = {};
+    try { fmt = ed.getFormat(t.index, t.len) || {}; } catch (e) {}
+    ed.deleteText(t.index, t.len, 'user');
+    if (ersetzText) ed.insertText(t.index, ersetzText, fmt, 'user');
+    return true;
+  }, [ersetzText]);
+
+  const ersetzeAktuellen = useCallback(() => {
+    const liste = trefferListe;
+    if (!liste.length) return;
+    const t = liste[Math.min(suchIndex, liste.length - 1)];
+    if (ersetzeEinen(t)) setSuchRefresh(v => v + 1);
+  }, [trefferListe, suchIndex, ersetzeEinen]);
+
+  const ersetzeAlle = useCallback(() => {
+    const liste = trefferListe;
+    if (!liste.length) return;
+    // Back to front, so the positions of the remaining matches stay valid.
+    let n = 0;
+    for (let i = liste.length - 1; i >= 0; i--) {
+      if (ersetzeEinen(liste[i])) n++;
+    }
+    setSuchIndex(0);
+    setSuchRefresh(v => v + 1);
+    if (window.__showFormatToast) window.__showFormatToast(n + ' occurrences replaced');
+  }, [trefferListe, ersetzeEinen]);
+
   // Kontextmenü
   const handleContextMenu = useCallback((e, sceneId, elementType) => {
     e.preventDefault();
@@ -18350,10 +18425,58 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
           <div style={{ flex: 1 }} />
 
           <div className="schreibtisch-toolbar-group">
+            <button
+              className="schreibtisch-toolbar-btn"
+              onClick={() => setSuchOffen(o => !o)}
+              title="Find and replace"
+              style={suchOffen ? { background: '#e8e0d0' } : undefined}
+            >{'\uD83D\uDD0D'}</button>
             <button className="schreibtisch-toolbar-btn" onClick={exportPDF} title="Print as PDF">PDF</button>
             <button className="schreibtisch-toolbar-btn" onClick={onExportDocx} title="Export as DOCX">DOCX</button>
           </div>
         </div>
+
+        {/* Find and replace */}
+        {suchOffen && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap',
+            padding: '0.45rem 0.7rem', background: '#faf7f0',
+            borderBottom: '1px solid #e0d8c8', fontSize: '0.78rem'
+          }}>
+            <input
+              type="text"
+              value={suchText}
+              autoFocus
+              placeholder="Find"
+              onChange={(e) => { setSuchText(e.target.value); setSuchIndex(0); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); springeZuTreffer(e.shiftKey ? suchIndex - 1 : suchIndex + 1); }
+                if (e.key === 'Escape') { e.preventDefault(); setSuchOffen(false); }
+              }}
+              style={{ padding: '0.25rem 0.4rem', fontSize: '0.78rem', width: '160px', border: '1px solid #d8cfbe', borderRadius: '4px' }}
+            />
+            <input
+              type="text"
+              value={ersetzText}
+              placeholder="Replace with"
+              onChange={(e) => setErsetzText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setSuchOffen(false); } }}
+              style={{ padding: '0.25rem 0.4rem', fontSize: '0.78rem', width: '160px', border: '1px solid #d8cfbe', borderRadius: '4px' }}
+            />
+            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex - 1)} title="Previous match">{'\u2191'}</button>
+            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex + 1)} title="Next match">{'\u2193'}</button>
+            <button className="schreibtisch-toolbar-btn" onClick={ersetzeAktuellen} disabled={!trefferListe.length}>Replace</button>
+            <button className="schreibtisch-toolbar-btn" onClick={ersetzeAlle} disabled={!trefferListe.length}>Replace all</button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#666', cursor: 'pointer' }}>
+              <input type="checkbox" checked={suchGrossKlein} onChange={(e) => setSuchGrossKlein(e.target.checked)} />
+              Match case
+            </label>
+            <span style={{ color: '#888', marginLeft: 'auto' }}>
+              {suchText ? (trefferListe.length ? ((Math.min(suchIndex, trefferListe.length - 1) + 1) + ' of ' + trefferListe.length) : 'no matches') : ''}
+            </span>
+            <button className="schreibtisch-toolbar-btn" onClick={() => setSuchOffen(false)} title="Close">{'\u00D7'}</button>
+          </div>
+        )}
 
         {/* Format-Shortcuts Box — fixed unten rechts */}
         <div className="format-shortcut-box">
@@ -20082,7 +20205,28 @@ function DrameraWerkbank() {
   }, []);
   // Zeitstempel des letzten Datei-/Drive-Backups festhalten (für die Erinnerung)
   useEffect(() => {
-    if (lastFileSaveTime) { try { localStorage.setItem('dramera-last-backup', new Date(lastFileSaveTime).toISOString()); } catch (e) {} setBackupOverdue(false); }
+    if (lastFileSaveTime) {
+      try { localStorage.setItem('dramera-last-backup', new Date(lastFileSaveTime).toISOString()); } catch (e) {}
+      setBackupOverdue(false);
+      // Nach einer erfolgreichen Sicherung darf der Speicher-Alarm nicht stehen bleiben.
+      // Das Projekt liegt jetzt in einer Datei, also ist die lange Versionsgeschichte
+      // im Browser entbehrlich – sie ist der Hauptverbraucher der 5-MB-Quota.
+      try {
+        cleanupDrameraStorage();
+        const vh = localStorage.getItem('nina_version_history');
+        if (vh) {
+          try {
+            const parsed = JSON.parse(vh);
+            if (Array.isArray(parsed) && parsed.length > 3) {
+              localStorage.setItem('nina_version_history', JSON.stringify(parsed.slice(-3)));
+            }
+          } catch (e) { localStorage.removeItem('nina_version_history'); }
+        }
+        window.__ninaStorageFull = false;
+      } catch (e) {}
+      setVersionHistory(prev => (prev.length > 3 ? prev.slice(-3) : prev));
+      setStorageFull(false);
+    }
   }, [lastFileSaveTime]);
   useEffect(() => {
     if (lastGdriveBackupTime) { try { localStorage.setItem('dramera-last-backup', new Date().toISOString()); } catch (e) {} setBackupOverdue(false); }
