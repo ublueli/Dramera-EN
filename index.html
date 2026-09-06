@@ -38,6 +38,8 @@
     // der Bereinigung und der Eintrag felder.absatzTypen im TOOL_SCHEMA. Wer
     // einen Absatztyp ergaenzt, ergaenzt ihn hier – und nirgends sonst.
     // taste:  Leader-Taste, null wenn der Typ nur ueber die Auswahlliste kommt.
+    //         B (Nebentext) und O (Notiz) als Zweitbuchstaben, weil N (Normal)
+    //         und E (Einfuegen/paste format) belegt sind.
     // klasse: was im Datenmodell steht (data.felder[].inhalt), null bei Normal.
     // quill:  Blot-Wert im Schreibtisch. css: dort geschrieben als format-<css>.
     window.SZENE_ABSATZ_TYPEN = [
@@ -49,10 +51,10 @@
       { taste: 'l',  klasse: 'fmt-lied',         quill: 'lied',           css: 'lied',           name: 'Song',           symbol: '🎵' },
       { taste: 'v',  klasse: 'fmt-vers',         quill: 'vers',           css: 'vers',           name: 'Verse',           symbol: '📜' },
       { taste: 'p',  klasse: 'fmt-pause',        quill: 'pause',          css: 'pause',          name: 'Pause',          symbol: '⏸' },
-      { taste: null, klasse: 'fmt-nebentext',    quill: 'nebentext',      css: 'nebentext',      name: 'Secondary text',      symbol: '📝' },
-      { taste: null, klasse: 'fmt-musik',        quill: 'musik',          css: 'musik',          name: 'Music',          symbol: '🎼' },
-      { taste: null, klasse: 'fmt-sound',        quill: 'sound',          css: 'sound',          name: 'Sound',          symbol: '🔊' },
-      { taste: null, klasse: 'fmt-notiz',        quill: 'notiz',          css: 'notiz',          name: 'Note',          symbol: '💡' },
+      { taste: 'b',  klasse: 'fmt-nebentext',    quill: 'nebentext',      css: 'nebentext',      name: 'Secondary text',      symbol: '📝' },
+      { taste: 'm',  klasse: 'fmt-musik',        quill: 'musik',          css: 'musik',          name: 'Music',          symbol: '🎼' },
+      { taste: 's',  klasse: 'fmt-sound',        quill: 'sound',          css: 'sound',          name: 'Sound',          symbol: '🔊' },
+      { taste: 'o',  klasse: 'fmt-notiz',        quill: 'notiz',          css: 'notiz',          name: 'Note',          symbol: '💡' },
       { taste: 'n',  klasse: null,               quill: 'standard',       css: 'standard',       name: 'Normal',         symbol: '' }
     ];
 
@@ -153,6 +155,13 @@
     window.SZENE_ABSATZ_TYPEN.forEach(function (t) { FORMAT_NAMEN[t.quill] = t.name; });
     FORMAT_NAMEN.standard = 'Standard';
 
+    // Übersetzungen fmt-Klasse ↔ Quill-Format (Format kopieren/einfügen zwischen Ordnen und Schreibtisch) – abgeleitet.
+    var FMT_ZU_QUILL = {};
+    var QUILL_ZU_FMT = {};
+    window.SZENE_ABSATZ_TYPEN.forEach(function (t) {
+      if (t.klasse) { FMT_ZU_QUILL[t.klasse] = t.quill; QUILL_ZU_FMT[t.quill] = t.klasse; }
+    });
+
     // === POSITIVLISTE FÜR DIE BEREINIGUNG DES SZENENTEXTS ===
     // Auftrag vom 27.07.2026: Beim Laden darf die Auszeichnung nicht verworfen
     // werden. Erlaubt sind die Absatzklassen oben, die Marken, die die App im
@@ -244,11 +253,8 @@
       popup.id = 'leader-popup';
       popup.innerHTML = '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#9ca3af;margin-bottom:4px;">Choose format…</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 12px;">'
-        + '<span><b>F</b> Character name</span><span><b>D</b> Dialogue</span>'
-        + '<span><b>R</b> Stage direction</span><span><b>T</b> Scene title</span>'
-        + '<span><b>A</b> Act title</span><span><b>L</b> Song</span>'
-        + '<span><b>V</b> Verse</span><span><b>P</b> Pause</span>'
-        + '<span><b>N</b> Default</span><span style="color:#9ca3af;">───</span>'
+        + window.SZENE_ABSATZ_TYPEN.filter(function(t) { return t.taste; }).map(function(t) { return '<span><b>' + t.taste.toUpperCase() + '</b> ' + t.name + '</span>'; }).join('')
+        + '<span style="color:#9ca3af;">───</span>'
         + '<span><b>K</b> Copy</span><span><b>E</b> Paste</span>'
         + '</div>';
       popup.style.cssText = 'position:fixed;bottom:80px;right:16px;background:rgba(20,20,20,0.95);color:#e5e7eb;padding:10px 14px;border-radius:8px;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;z-index:10001;box-shadow:0 4px 20px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);pointer-events:none;';
@@ -376,15 +382,13 @@
           if (ctxInQuill && ctxQuill) {
             var fmt = window.__copiedFormat.format;
             if (window.__copiedFormat.type === 'ordnen') {
-              var convertMap = { 'fmt-dialog': 'dialog', 'fmt-regie': 'regieanweisung', 'fmt-szenen-titel': 'szeneTitel', 'fmt-akt-titel': 'aktTitel', 'fmt-lied': 'lied', 'fmt-vers': 'vers', 'fmt-pause': 'pause', 'fmt-figurenname': 'figurenname' };
-              fmt = convertMap[fmt] || 'standard';
+              fmt = FMT_ZU_QUILL[fmt] || 'standard';
             }
             setBlockFormat(ctxQuill, fmt);
           } else if (ctxInOrdnen && ctxNode && ctxNode.classList) {
             var cls = window.__copiedFormat.format;
             if (window.__copiedFormat.type === 'quill') {
-              var convertMap2 = { dialog: 'fmt-dialog', regieanweisung: 'fmt-regie', szeneTitel: 'fmt-szenen-titel', aktTitel: 'fmt-akt-titel', lied: 'fmt-lied', vers: 'fmt-vers', pause: 'fmt-pause', figurenname: 'fmt-figurenname' };
-              cls = convertMap2[cls] || null;
+              cls = QUILL_ZU_FMT[cls] || null;
             }
             Array.from(ctxNode.classList).filter(function(c) { return c.startsWith('fmt-'); }).forEach(function(c) { ctxNode.classList.remove(c); });
             if (cls) ctxNode.classList.add(cls);
@@ -424,8 +428,13 @@
       var editorDiv = document.createElement('div');
       element.appendChild(editorDiv);
 
+      // Der Schreibtisch scrollt in .schreibtisch-main, nicht im Editor selbst. Quill muss das wissen,
+      // sonst springt die Ansicht beim Einfügen (Paste) an eine andere Stelle, weil Quill den Scrollstand
+      // des falschen Elements sichert und wiederherstellt.
+      var scrollHost = element.closest ? element.closest('.schreibtisch-main') : null;
       var quill = new Quill(editorDiv, {
         theme: null,
+        scrollingContainer: scrollHost || null,
         modules: {
           toolbar: false,
           keyboard: { bindings: formatBindings },
@@ -1707,6 +1716,15 @@ EXPORTING
 KEYBOARD SHORTCUTS
 
 • Cmd/Ctrl + S: Opens the save dialog
+• Cmd/Ctrl + F: Find and replace in the desk view (across all scenes)
+
+Format templates in the desk view (and in Ordering) are set with a leader key: first press Esc, then the letter within 1.5 seconds. A small panel at the bottom right shows the choices.
+
+• Esc F: Character name · Esc D: Dialogue · Esc R: Stage direction
+• Esc T: Scene title · Esc A: Act title · Esc L: Song · Esc V: Verse · Esc P: Pause
+• Esc B: Secondary text · Esc M: Music · Esc S: Sound · Esc O: Note · Esc N: Standard
+• Esc K: copy the format of the current paragraph · Esc E: paste the copied format
+• Esc again: cancel
 
 THE WIKI
 
@@ -4400,7 +4418,7 @@ const WIKI_ENTRIES = {
       { heading: 'The timeline', text: 'You now drag the scene ideas from the material column onto the timeline. This is where the shape of the story emerges: order, weight, rhythm. Scenes can be moved until the sequence is right; a scene that turns out to be miscast goes back into the pool with **↩️ Back to ideas**, without being lost.' },
       { heading: 'Tracking', text: 'The **👁️ Tracking** bar sits above the timeline. It answers questions you otherwise only notice in the finished text, when it is too late: does a character appear in the middle section at all? Does a theme disappear after the halfway mark?\n\nYou first choose the mode – **Track characters** or **Track themes** – and then add individual entries via **+ Add character** or **+ Add theme**. Every selection appears as a coloured tag, and a trace runs beneath the scenes showing where that character appears or how that theme develops. Multiple selection is possible, so two characters can be compared directly. **Off** hides it all again.' },
       { heading: 'The edit field', text: 'Clicking a scene on the timeline opens **Edit field** on the right.\n\nThe **title** of the scene stands at the top. Below it the button **🧭 Guided scene development**, which leads step by step through dramaturgical questions about this particular scene. Then the **Summary**, then **Status** – from the bare idea to the finished scene –, and finally **Characters** and **Themes**: who appears, what it is about. You fill both by clicking the corresponding entries in the material column; they then appear as small tags and can be removed one at a time.\n\nThree collapsible areas sit below. **🎭 Dramaturgy** holds the craft: **🎯 Goal** – what does the main character want to achieve here –, **⚡ Resistance** – what stands in the way – and **🔄 Turning point** – the moment everything tips; an **ℹ️** there opens the five dialogue principles. If characters are assigned to the scene, a line per character appears in which you enter what that character wants in this scene, along with a dropdown of conversation types. This is where it is decided whether a scene works – if everyone wants the same thing, nothing happens.\n\n**📝 Notes** is the free space for anything you want to remember about the scene. **👥 Character tracking** shows which characters are in this scene and lets you record their state scene by scene – the counterpart to the tracking bar, which shows the same thing across all scenes.' },
-      { heading: 'Dialogue and the format templates', text: 'In the middle, beneath the timeline, lies the surface on which the actual text is written. It works with format templates that you do not assign with the mouse but with the Escape key and a letter. A small box at the bottom right permanently shows the overview:\n\n**F** Character name · **D** Dialogue · **R** Stage direction · **T** Scene title · **A** Act title · **L** Song · **V** Verse · **P** Pause · **N** Normal\n\nIn addition, **K** copies the format of the current line and **E** applies it elsewhere. Without shortcuts, available only through the dropdown, there are secondary text, music, sound and note – the note being a directing remark that does not appear in print.\n\nThe point of these templates is not the look but the structure: because the app knows what is a character name and what is dialogue, it can export the text cleanly, hand it over to the prompt book and count speaking shares.' },
+      { heading: 'Dialogue and the format templates', text: 'In the middle, beneath the timeline, lies the surface on which the actual text is written. It works with format templates that you do not assign with the mouse but with the Escape key and a letter. A small box at the bottom right permanently shows the overview:\n\n**F** Character name · **D** Dialogue · **R** Stage direction · **T** Scene title · **A** Act title · **L** Song · **V** Verse · **P** Pause · **B** Secondary text · **M** Music · **S** Sound · **O** Note · **N** Normal\n\nIn addition, **K** copies the format of the current line and **E** applies it elsewhere (which is why secondary text uses B and note uses O). All templates are also available through the dropdown and the context menu; the note is a directing remark that does not appear in print.\n\nThe point of these templates is not the look but the structure: because the app knows what is a character name and what is dialogue, it can export the text cleanly, hand it over to the prompt book and count speaking shares.' },
       { heading: 'The desk', text: 'The third tab shows the same play as a single continuous document, set like an A4 page: title page with the title of the play, the logline as subtitle and the author\'s name, then the cast list, then the text scene by scene.\n\nHere you write and edit in context instead of scene by scene. The same format templates apply, the same Escape logic. A bar continuously shows where in the play you are. Two buttons sit at the top right: **PDF** prints the version as a PDF, **DOCX** exports it as a Word file.\n\nThe desk is the place for the last pass – when the structure holds and only the language is left.' },
       { heading: 'The project menu', text: 'At the very top left, above the material column, a button with a folder icon and the project name opens the project menu.\n\nUnder **📁 PROJECT**: **📄 New...** creates an empty project. **🎭 Demo: Romeo & Juliet** loads a fully worked-out example project – the fastest way to see what a filled project looks like before starting your own. **💾 Save** (⌘S) saves the project. **🔄 Open, save as & share...** opens the import/export window. **⚙️ Settings...** leads among other things to the API key for the AI features.' },
       { heading: 'Saving, opening, sharing', text: 'Everything to do with files comes together in the import/export window.\n\n**💾 Save as file** writes the whole project into a file ending in .dramera.json – the safe format, with which nothing is lost. **📂 Open project** loads a project or an older backup back in. **📦 Everything as ZIP** packs the project including its version history into an archive. **🧩 Export structure only** outputs merely the field names and keys of all tools, without content – a few kilobytes, meant for cases where valid entries are to be written from outside.\n\n**🤖 Import with AI** analyses an existing text, a PDF or a Word file and extracts characters, scenes and themes from it; this requires a stored API key.\n\n**⚡ Open in Rebu** transfers the project straight to the prompt book. A second route exports it in the shared exchange format that the rehearsal planner reads too.\n\n**☁️ Google Drive** has its own section further down in the same window. Connect once and choose a folder, and the workbench writes exchange file and backup straight into that shared folder and loads projects back from it. While Drive is connected it also uploads a backup on its own every five minutes into Dramera/Backups, keeping the last twenty states.\n\nOne thing to understand: there is no Dramera server holding the projects. As long as nothing is saved, the project lives in the browser storage alone. It is written there continuously and automatically – twice over, in local storage and in a browser database from which the workbench can offer a lost project back – but that storage is small and disappears the moment browser data is cleared or the device changes. Which is why **💾 Save as file** sits at the top, marked in green.\n\nSaving to a file is a one-time act, though, not a chore to repeat. Once the project has been written into a file, the workbench keeps that file current itself: it writes back every thirty seconds as soon as anything has changed. This works in Chrome and Edge; Firefox and Safari do not know the necessary file access, so there every save downloads a fresh copy that you have to keep track of yourself. The header on the left tells you where you stand: an orange dot means edited, a green tick with a time means saved, an empty circle means no file exists yet. If the last backup is more than a week old, the workbench reminds you.' },
@@ -17905,6 +17923,51 @@ const THEATER_FORMATE = {
 };
 
 // =====================================================
+// SZENENTITEL-NORMALISIERUNG
+// Szenen werden von der App nummeriert. Eine Nummer im Titeltext
+// («1 · De Chrieg», «2. De Tisch», «1.1 – Foo») ist Altlast aus Importen
+// und wird beim Laden/Speichern entfernt. Ebenso ein «Szenen-Titel»-Absatz
+// am Anfang des Szenentexts, der den Titel nur wiederholt.
+// Rebu/Propla führen number und name getrennt – der Austausch bleibt gleich.
+// =====================================================
+const stripSzenenNummer = (titel) => {
+  if (typeof titel !== 'string') return titel;
+  return titel.replace(/^\s*\d{1,3}(?:\.\d{1,3})*\s*(?:[·•.:\-–—]\s*)+/, '').trim();
+};
+
+const stripLeadingSzenenTitelBlock = (inhalt, titel) => {
+  if (typeof inhalt !== 'string' || !inhalt) return inhalt;
+  const m = inhalt.match(/^\s*<(div|p)\b[^>]*class="[^"]*(?:fmt-szenen-titel|format-szene-titel)[^"]*"[^>]*>([\s\S]*?)<\/\1>\s*/i);
+  if (!m) return inhalt;
+  const text = stripSzenenNummer(m[2].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()).toLowerCase();
+  const soll = stripSzenenNummer(titel || '').toLowerCase();
+  if (text === '' || text === soll) return inhalt.slice(m[0].length);
+  return inhalt;
+};
+
+// Figurenbeschrieb für Exporte: Kurzangaben (Alter, Beruf) und die Kurzcharakteristik der Figur
+const figurenBeschrieb = (f) => {
+  if (!f) return { kurz: '', text: '' };
+  const kurz = [f.alter, f.beruf].map(x => (x || '').trim()).filter(Boolean).join(', ');
+  const text = (f.charakteristik || f.beschreibung || f.wesen || '').trim();
+  return { kurz, text };
+};
+
+const normalizeProjektData = (d) => {
+  if (!d || !Array.isArray(d.felder)) return d;
+  let changed = false;
+  const felder = d.felder.map(f => {
+    if (!f || typeof f !== 'object') return f;
+    const titel = stripSzenenNummer(f.titel);
+    const inhalt = stripLeadingSzenenTitelBlock(f.inhalt, titel);
+    if (titel === f.titel && inhalt === f.inhalt) return f;
+    changed = true;
+    return { ...f, titel, inhalt };
+  });
+  return changed ? { ...d, felder } : d;
+};
+
+// =====================================================
 // SCHREIBTISCH-VIEW – Textverarbeitungs-Modus
 // =====================================================
 const SCHREIBTISCH_FORMATVORLAGEN = {
@@ -17922,8 +17985,10 @@ const SCHREIBTISCH_FORMATVORLAGEN = {
   notiz: { name: 'Note', class: 'format-notiz', description: 'Director\'s note (do not print)', icon: '📝' },
   nebentext: { name: 'Secondary text', class: 'format-nebentext', description: 'Explanatory text', icon: '📄' }
 };
+// Kürzel (Esc → Buchstabe) aus der zentralen Liste der Absatztypen ableiten – nicht doppelt führen
+(window.SZENE_ABSATZ_TYPEN || []).forEach(t => { if (t.taste && SCHREIBTISCH_FORMATVORLAGEN[t.quill]) SCHREIBTISCH_FORMATVORLAGEN[t.quill].shortcut = t.taste.toUpperCase(); });
 
-const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparringWithAI, onExportDocx }) => {
+const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparringWithAI, projectMenu, onExportPdf, onExportDocx }) => {
   const [activeSceneId, setActiveSceneId] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [currentPosition, setCurrentPosition] = useState('');
@@ -18190,6 +18255,29 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
   }, []);
 
   // === FIND AND REPLACE across all scene editors ===
+  // Text eines Editors mit Quill-Positionen: Bilder und andere Einbettungen zählen als ein Zeichen,
+  // getText() lässt sie weg – dann stimmen die Positionen nach einer Einbettung nicht mehr.
+  const sucheEditorText = (ed) => {
+    try {
+      return ed.getContents().ops.map(op => typeof op.insert === 'string' ? op.insert : '\uFFFC').join('');
+    } catch (e) { return ed.getText(); }
+  };
+  const sucheTrefferInEditor = (ed, sceneId, text, gross) => {
+    const liste = [];
+    if (!text || !ed) return liste;
+    const nadel = gross ? text : text.toLowerCase();
+    const roh = sucheEditorText(ed);
+    const heu = gross ? roh : roh.toLowerCase();
+    if (heu.length !== roh.length) {
+      // Kleinschreibung hat die Länge verändert (exotische Zeichen) – auf exakte Suche ausweichen
+      let j = roh.indexOf(text);
+      while (j >= 0) { liste.push({ sceneId, index: j, len: text.length }); j = roh.indexOf(text, j + Math.max(1, text.length)); }
+      return liste;
+    }
+    let i = heu.indexOf(nadel);
+    while (i >= 0) { liste.push({ sceneId, index: i, len: text.length }); i = heu.indexOf(nadel, i + Math.max(1, text.length)); }
+    return liste;
+  };
   const trefferListe = useMemo(() => {
     const q = suchText;
     if (!q) return [];
@@ -18197,35 +18285,62 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
     sortedFelder.forEach(feld => {
       const ed = quillEditors.current[feld.id];
       if (!ed || !ed.getText) return;
-      const text = ed.getText();
-      const heu = suchGrossKlein ? text : text.toLowerCase();
-      const nadel = suchGrossKlein ? q : q.toLowerCase();
-      let von = 0;
-      let i = heu.indexOf(nadel, von);
-      while (i !== -1) {
-        treffer.push({ sceneId: feld.id, index: i, len: nadel.length });
-        von = i + nadel.length;
-        i = heu.indexOf(nadel, von);
-      }
+      treffer.push(...sucheTrefferInEditor(ed, feld.id, q, suchGrossKlein));
     });
     return treffer;
   }, [suchText, suchGrossKlein, sortedFelder, quillReady, suchRefresh]);
+
+  // Gelbe Markierung auf dem Blatt: die Textauswahl selbst ist unsichtbar, solange das Suchfeld den Fokus hat
+  const sucheMarkiere = useCallback((t) => {
+    if (!t) return;
+    const ed = quillEditors.current[t.sceneId]; if (!ed) return;
+    setActiveSceneId(t.sceneId);
+    try {
+      ed.setSelection(t.index, t.len, 'silent');
+      const b = ed.getBounds(t.index, t.len);
+      const page = ed.root.closest('.schreibtisch-page');
+      const host = ed.root.closest('.schreibtisch-main');
+      // getBounds() liefert Werte relativ zum Quill-Container (nicht zum Editor-Root)
+      const rootRect = (ed.container || ed.root.parentElement || ed.root).getBoundingClientRect();
+      if (page) {
+        let m = page.querySelector('.schreibtisch-suche-marker');
+        if (!m) { m = document.createElement('div'); m.className = 'schreibtisch-suche-marker'; page.appendChild(m); }
+        const pr = page.getBoundingClientRect();
+        m.style.left = (rootRect.left - pr.left + b.left - 2) + 'px';
+        m.style.top = (rootRect.top - pr.top + b.top - 1) + 'px';
+        m.style.width = (b.width + 4) + 'px';
+        m.style.height = (b.height + 2) + 'px';
+      }
+      const top = rootRect.top + b.top;
+      if (host && (top < host.getBoundingClientRect().top + 140 || top > host.getBoundingClientRect().bottom - 80)) host.scrollBy({ top: top - host.getBoundingClientRect().top - host.clientHeight / 2, behavior: 'smooth' });
+    } catch (e) {}
+  }, []);
+
+  // Markierung entfernen, wenn die Suche zugeht
+  useEffect(() => {
+    if (!suchOffen) document.querySelectorAll('.schreibtisch-suche-marker').forEach(m => m.remove());
+  }, [suchOffen]);
+
+  // ⌘F / Ctrl+F öffnet die Suche im Schreibtisch
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        setSuchOffen(true);
+        setTimeout(() => { const el = document.getElementById('schreibtisch-suche-text'); if (el) { el.focus(); el.select(); } }, 30);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   const springeZuTreffer = useCallback((n) => {
     const liste = trefferListe;
     if (!liste.length) return;
     const i = ((n % liste.length) + liste.length) % liste.length;
-    const t = liste[i];
-    const ed = quillEditors.current[t.sceneId];
-    if (!ed) return;
     setSuchIndex(i);
-    setActiveSceneId(t.sceneId);
-    const el = sceneRefs.current[t.sceneId];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      try { ed.focus(); ed.setSelection(t.index, t.len); } catch (e) {}
-    }, 80);
-  }, [trefferListe]);
+    sucheMarkiere(liste[i]);
+  }, [trefferListe, sucheMarkiere]);
 
   const ersetzeEinen = useCallback((t) => {
     const ed = quillEditors.current[t.sceneId];
@@ -18240,29 +18355,150 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
   const ersetzeAktuellen = useCallback(() => {
     const liste = trefferListe;
     if (!liste.length) return;
-    const t = liste[Math.min(suchIndex, liste.length - 1)];
-    if (ersetzeEinen(t)) setSuchRefresh(v => v + 1);
-  }, [trefferListe, suchIndex, ersetzeEinen]);
+    let t = liste[Math.min(suchIndex, liste.length - 1)];
+    // Positionen frisch prüfen – der Text kann sich seit der Suche verändert haben
+    const ed = quillEditors.current[t.sceneId];
+    if (ed) {
+      const frisch = sucheTrefferInEditor(ed, t.sceneId, suchText, suchGrossKlein);
+      if (!frisch.some(x => x.index === t.index)) t = frisch.find(x => x.index >= t.index) || frisch[0];
+    }
+    if (t && ersetzeEinen(t)) {
+      setSuchRefresh(v => v + 1);
+      setTimeout(() => {
+        const ed2 = quillEditors.current[t.sceneId];
+        if (!ed2) return;
+        const rest = sucheTrefferInEditor(ed2, t.sceneId, suchText, suchGrossKlein);
+        const naechster = rest.find(x => x.index >= t.index);
+        if (naechster) sucheMarkiere(naechster);
+        else document.querySelectorAll('.schreibtisch-suche-marker').forEach(m => m.remove());
+      }, 30);
+    }
+  }, [trefferListe, suchIndex, ersetzeEinen, suchText, suchGrossKlein, sucheMarkiere]);
 
   const ersetzeAlle = useCallback(() => {
-    const liste = trefferListe;
-    if (!liste.length) return;
-    // Back to front, so the positions of the remaining matches stay valid.
+    if (!suchText) return;
+    // Szene für Szene: Treffer frisch bestimmen und von hinten nach vorn ersetzen, damit die Positionen stimmen
     let n = 0;
-    for (let i = liste.length - 1; i >= 0; i--) {
-      if (ersetzeEinen(liste[i])) n++;
-    }
+    sortedFelder.forEach(feld => {
+      const ed = quillEditors.current[feld.id]; if (!ed) return;
+      const liste = sucheTrefferInEditor(ed, feld.id, suchText, suchGrossKlein).sort((a, b) => b.index - a.index);
+      liste.forEach(t => { if (ersetzeEinen(t)) n++; });
+    });
+    document.querySelectorAll('.schreibtisch-suche-marker').forEach(m => m.remove());
     setSuchIndex(0);
     setSuchRefresh(v => v + 1);
     if (window.__showFormatToast) window.__showFormatToast(n + ' occurrences replaced');
-  }, [trefferListe, ersetzeEinen]);
+  }, [sortedFelder, suchText, suchGrossKlein, ersetzeEinen]);
 
   // Kontextmenü
   const handleContextMenu = useCallback((e, sceneId, elementType) => {
     e.preventDefault();
     setActiveSceneId(sceneId);
-    setContextMenu({ x: e.clientX, y: e.clientY, sceneId, elementType });
+    // Welche Absätze sind unter dem Rechtsklick bzw. markiert? (für «Im Wörterbuch prüfen»)
+    let bereich = null;
+    const ed = quillEditors.current[sceneId];
+    if (ed) {
+      try {
+        const alle = ed.getLines(0, ed.getLength());
+        let range = ed.getSelection();
+        if (!range) {
+          // Kein Cursor im Editor: Absatz unter der Maus suchen
+          const blot = window.Quill && window.Quill.find ? window.Quill.find(e.target, true) : null;
+          if (blot && blot.offset) range = { index: ed.getIndex ? ed.getIndex(blot) : blot.offset(ed.scroll), length: 0 };
+        }
+        if (range) {
+          const lines = ed.getLines(range.index, Math.max(range.length, 1));
+          const von = alle.indexOf(lines[0]), bis = alle.indexOf(lines[lines.length - 1]);
+          if (von >= 0 && bis >= 0) bereich = { von, bis, auswahl: range.length > 0, anzahl: alle.length };
+        }
+      } catch (err) { /* ohne Bereich geht es mit «ganze Szene» weiter */ }
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY, sceneId, elementType, bereich });
   }, []);
+
+  // ===== KOPPLUNG MIT DEM MUNDART-WÖRTERBUCH =====
+  // Ein Bereich (Auswahl, Absatz, Szene) geht per Fenster-Nachricht ins Wörterbuch (mundart-woerterbuch.ch),
+  // wird dort geprüft und kommt mit derselben Formatstruktur zurück – ohne Kopieren.
+  const WB_URL = 'https://mundart-woerterbuch.ch/';
+  const WB_ORIGIN = 'https://mundart-woerterbuch.ch';
+  const wbFenster = useRef(null);
+  const wbWartend = useRef(null);
+  const wbOffen = useRef({});   // szeneId → {von, bis, htmlAlt}
+
+  const wbBloecke = useCallback((fmtHtml) => {
+    const doc = new DOMParser().parseFromString('<div id="w">' + (fmtHtml || '') + '</div>', 'text/html');
+    return Array.from(doc.getElementById('w').children).map(el => el.outerHTML);
+  }, []);
+
+  const wbSenden = useCallback((sceneId, von, bis) => {
+    const feld = data.felder.find(f => f.id === sceneId);
+    if (!feld) return;
+    const ed = quillEditors.current[sceneId];
+    const fmtHtml = ed ? convertFormatToFmt(ed.getHTML()) : (feld.inhalt || '');
+    const bloecke = wbBloecke(fmtHtml);
+    if (!bloecke.length) { window.__showFormatToast('No text in this scene'); return; }
+    if (von == null) { von = 0; bis = bloecke.length - 1; }
+    von = Math.max(0, von); bis = Math.min(bloecke.length - 1, bis == null ? von : bis);
+    // Vorangehenden Figurennamen mitnehmen, damit das Wörterbuch weiss, wer spricht
+    let sprecher = '';
+    for (let i = von - 1; i >= 0; i--) {
+      const m = /class="fmt-figurenname"[^>]*>([\s\S]*?)<\//.exec(bloecke[i]);
+      if (m) { sprecher = m[1].replace(/<[^>]+>/g, '').trim(); break; }
+      if (/fmt-(szenen-titel|akt-titel|regie)/.test(bloecke[i])) break;
+    }
+    const html = bloecke.slice(von, bis + 1).join('');
+    const nachricht = { typ: 'nina-pruefung', v: 1, quelle: 'dramera', projekt: data.projektName || '', szeneId: sceneId,
+      szeneTitel: feld.titel || '', von, bis, sprecher, html };
+    wbOffen.current[sceneId] = { von, bis, htmlAlt: html };
+    const w = wbFenster.current;
+    if (w && !w.closed) {
+      w.postMessage(nachricht, WB_ORIGIN);
+      w.focus();
+    } else {
+      wbWartend.current = nachricht;
+      wbFenster.current = window.open(WB_URL + '#pruefung', 'mundart-woerterbuch');
+    }
+    window.__showFormatToast('Sent to the dictionary – check it there and press "back to Dramera"');
+  }, [data.felder, data.projektName, convertFormatToFmt, wbBloecke]);
+
+  // Nachrichten vom Wörterbuch: «bereit» (dann Wartendes schicken) und «ergebnis» (Text einsetzen)
+  useEffect(() => {
+    const onMsg = (ev) => {
+      if (ev.origin !== WB_ORIGIN || !ev.data || typeof ev.data !== 'object') return;
+      const d = ev.data;
+      if (d.typ === 'nina-bereit') {
+        wbFenster.current = ev.source;
+        if (wbWartend.current) { ev.source.postMessage(wbWartend.current, WB_ORIGIN); wbWartend.current = null; }
+        return;
+      }
+      if (d.typ === 'nina-pruefung-ergebnis' && d.szeneId) {
+        const feld = data.felder.find(f => f.id === d.szeneId);
+        if (!feld) { window.__showFormatToast('Scene no longer found'); return; }
+        const ed = quillEditors.current[d.szeneId];
+        const fmtHtml = ed ? convertFormatToFmt(ed.getHTML()) : (feld.inhalt || '');
+        const bloecke = wbBloecke(fmtHtml);
+        let von = d.von, bis = d.bis;
+        const aktuell = bloecke.slice(von, bis + 1).join('');
+        if (aktuell !== d.htmlAlt) {
+          // Der Text hat sich inzwischen verschoben – den ursprünglichen Block-Ausschnitt suchen
+          const altBl = wbBloecke(d.htmlAlt);
+          let gefunden = -1;
+          for (let i = 0; i + altBl.length <= bloecke.length; i++) {
+            if (bloecke.slice(i, i + altBl.length).join('') === d.htmlAlt) { gefunden = i; break; }
+          }
+          if (gefunden < 0) {
+            if (!confirm('This passage has changed in Dramera since it was sent. Replace it at the original position anyway?')) return;
+          } else { von = gefunden; bis = gefunden + altBl.length - 1; }
+        }
+        const neu = bloecke.slice(0, von).concat([d.htmlNeu]).concat(bloecke.slice(bis + 1)).join('');
+        updateFeld(d.szeneId, { inhalt: neu });
+        delete wbOffen.current[d.szeneId];
+        window.__showFormatToast('✓ Checked text taken over from the dictionary');
+      }
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [data.felder, convertFormatToFmt, wbBloecke, updateFeld]);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
@@ -18292,7 +18528,7 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
   // Titel editieren
   const handleTitelEdit = useCallback((sceneId, newTitel) => {
     // Nummer am Anfang entfernen (wird automatisch generiert)
-    const clean = newTitel.replace(/^\d+\.\s*/, '').trim();
+    const clean = stripSzenenNummer(newTitel);
     if (clean) updateFeld(sceneId, { titel: clean });
   }, [updateFeld]);
 
@@ -18322,6 +18558,13 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
     <div className="schreibtisch-container">
       {/* Navigation Sidebar */}
       <div className="schreibtisch-nav">
+        {/* Logo + Projekt-Menü (Öffnen, Sichern, Einstellungen …) – wie in der Material-Sidebar */}
+        {projectMenu && (
+          <div className="schreibtisch-nav-projekt">
+            <img src="nina-logo.jpg" alt="NINA Logo" />
+            {projectMenu}
+          </div>
+        )}
         <div className="schreibtisch-nav-header">
           <span>Scenes</span>
           <span style={{ fontSize: '0.7rem', color: '#aaa', fontWeight: 400 }}>{sortedFelder.length}</span>
@@ -18426,12 +18669,20 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
 
           <div className="schreibtisch-toolbar-group">
             <button
-              className="schreibtisch-toolbar-btn"
-              onClick={() => setSuchOffen(o => !o)}
-              title="Find and replace"
-              style={suchOffen ? { background: '#e8e0d0' } : undefined}
+              className={'schreibtisch-toolbar-btn' + (suchOffen ? ' active' : '')}
+              onClick={() => {
+                setSuchOffen(o => !o);
+                setTimeout(() => { const el = document.getElementById('schreibtisch-suche-text'); if (el) el.focus(); }, 30);
+              }}
+              title="Find and replace (Cmd/Ctrl+F)"
             >{'\uD83D\uDD0D'}</button>
-            <button className="schreibtisch-toolbar-btn" onClick={exportPDF} title="Print as PDF">PDF</button>
+          </div>
+
+          <div className="schreibtisch-toolbar-divider" />
+
+          <div className="schreibtisch-toolbar-group">
+            {/* Beide Buttons nutzen den zentralen Stücktext-Export (gleiche Formatvorlagen für PDF und DOCX) */}
+            <button className="schreibtisch-toolbar-btn" onClick={onExportPdf || exportPDF} title="Print as PDF">PDF</button>
             <button className="schreibtisch-toolbar-btn" onClick={onExportDocx} title="Export as DOCX">DOCX</button>
           </div>
         </div>
@@ -18444,6 +18695,7 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
             borderBottom: '1px solid #e0d8c8', fontSize: '0.78rem'
           }}>
             <input
+              id="schreibtisch-suche-text"
               type="text"
               value={suchText}
               autoFocus
@@ -18456,17 +18708,21 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
               style={{ padding: '0.25rem 0.4rem', fontSize: '0.78rem', width: '160px', border: '1px solid #d8cfbe', borderRadius: '4px' }}
             />
             <input
+              id="schreibtisch-suche-ersatz"
               type="text"
               value={ersetzText}
               placeholder="Replace with"
               onChange={(e) => setErsetzText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); setSuchOffen(false); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); ersetzeAktuellen(); }
+                if (e.key === 'Escape') { e.preventDefault(); setSuchOffen(false); }
+              }}
               style={{ padding: '0.25rem 0.4rem', fontSize: '0.78rem', width: '160px', border: '1px solid #d8cfbe', borderRadius: '4px' }}
             />
-            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex - 1)} title="Previous match">{'\u2191'}</button>
-            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex + 1)} title="Next match">{'\u2193'}</button>
+            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex - 1)} title="Previous match (Shift+Enter)">{'\u2191'}</button>
+            <button className="schreibtisch-toolbar-btn" onClick={() => springeZuTreffer(suchIndex + 1)} title="Next match (Enter)">{'\u2193'}</button>
             <button className="schreibtisch-toolbar-btn" onClick={ersetzeAktuellen} disabled={!trefferListe.length}>Replace</button>
-            <button className="schreibtisch-toolbar-btn" onClick={ersetzeAlle} disabled={!trefferListe.length}>Replace all</button>
+            <button className="schreibtisch-toolbar-btn" onClick={() => { if (trefferListe.length && confirm('Replace ' + trefferListe.length + ' occurrences?')) ersetzeAlle(); }} disabled={!trefferListe.length}>Replace all</button>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#666', cursor: 'pointer' }}>
               <input type="checkbox" checked={suchGrossKlein} onChange={(e) => setSuchGrossKlein(e.target.checked)} />
               Match case
@@ -18595,7 +18851,7 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
         <div className="schreibtisch-context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}>
 
-          {Object.entries(SCHREIBTISCH_FORMATVORLAGEN).slice(0, 8).map(([key, v]) => (
+          {Object.entries(SCHREIBTISCH_FORMATVORLAGEN).map(([key, v]) => (
             <div key={key} className="schreibtisch-context-menu-item" onClick={() => {
               applyFormat(key);
               closeContextMenu();
@@ -18604,6 +18860,25 @@ const SchreibtischView = ({ data, setData, updateFeld, addFeld, apiKey, sparring
               {v.shortcut && <span className="schreibtisch-toolbar-shortcut">Esc → {v.shortcut}</span>}
             </div>
           ))}
+
+          <div className="schreibtisch-context-menu-sep" />
+
+          {contextMenu.bereich && contextMenu.bereich.auswahl && (
+            <div className="schreibtisch-context-menu-item" onClick={() => {
+              wbSenden(contextMenu.sceneId, contextMenu.bereich.von, contextMenu.bereich.bis);
+              closeContextMenu();
+            }}>📚 Check selection in dictionary</div>
+          )}
+          {contextMenu.bereich && !contextMenu.bereich.auswahl && (
+            <div className="schreibtisch-context-menu-item" onClick={() => {
+              wbSenden(contextMenu.sceneId, contextMenu.bereich.von, contextMenu.bereich.von);
+              closeContextMenu();
+            }}>📚 Check paragraph in dictionary</div>
+          )}
+          <div className="schreibtisch-context-menu-item" onClick={() => {
+            wbSenden(contextMenu.sceneId, null, null);
+            closeContextMenu();
+          }}>📚 Check scene in dictionary</div>
 
           <div className="schreibtisch-context-menu-sep" />
 
@@ -18751,7 +19026,10 @@ function SzenenGuideModal({ feld, figuren, onSave, onClose }) {
 
 function DrameraWerkbank() {
   // Lade gespeicherte Daten aus localStorage oder verwende Default
-  const [data, setData] = useState(savedState?.data || DEFAULT_DATA);
+  const [data, setDataRaw] = useState(() => normalizeProjektData(savedState?.data || DEFAULT_DATA));
+  // Jede Zustandsänderung läuft durch die Szenentitel-Normalisierung
+  // (Nummern raus aus dem Titeltext, doppelter Titel-Absatz raus).
+  const setData = useCallback((v) => setDataRaw(prev => normalizeProjektData(typeof v === 'function' ? v(prev) : v)), []);
 
   // Einmalige Reparatur beim Öffnen: doppelte oder fehlende IDs eindeutig machen.
   // Früher konnten mehrere gleichzeitig übernommene KI-Figuren dieselbe ID
@@ -22188,9 +22466,8 @@ IMPORTANT RULES:
       // eingesetzt werden – ein präpariertes Dokument könnte sonst Markup einschleusen.
       const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       let html = '';
-      if (szeneTitel) {
-        html += `<div class="fmt-szenen-titel">${esc(szeneTitel)}</div>`;
-      }
+      // Kein Szenen-Titel-Absatz im Text: Die App setzt die Überschrift selbst
+      // (sonst erscheint der Titel im Schreibtisch doppelt).
       dialog.forEach(entry => {
         if (entry.typ === 'regie') {
           html += `<div class="fmt-regie">${esc(entry.text)}</div>`;
@@ -23953,7 +24230,7 @@ IMPORTANT RULES:
       </head>
       <body>
         <div class="print-header">
-          <span>📄 ${title} – Druckvorschau</span>
+          <span>📄 ${title} – Print preview <small style="opacity:0.8;font-weight:normal">(turn off "Headers and footers" in the print dialog – the running header with the page number comes from the document itself)</small></span>
           <button onclick="window.print()">🖨️ Print as PDF</button>
         </div>
         <div class="content-wrapper">
@@ -24125,9 +24402,75 @@ IMPORTANT RULES:
     const lines = [];
     const isHtml = format !== 'txt';
     
-    // CSS Styles für HTML-Export (wie im Rapunzel-Dokument)
+    // CSS für HTML/PDF-Export – aus THEATER_FORMATE abgeleitet,
+    // damit PDF und DOCX dieselben Formatvorlagen verwenden.
     if (isHtml) {
-      lines.push(`<style>        body { font-family: 'Courier New', Courier, monospace; font-size: 12pt; line-height: 1.5; max-width: 21cm; margin: 0 auto; padding: 2cm; }         .titelseite { text-align: center; page-break-after: always; min-height: 100vh; display: flex; flex-direction: column; padding: 5cm 2cm 2cm 2cm; position: relative; }         .titelseite h1 { font-family: Arial, sans-serif; font-size: 24pt; font-weight: bold; margin-bottom: 0.5em; }         .titelseite .untertitel { font-family: Arial, sans-serif; font-size: 14pt; margin: 0.5em 0; }         .titelseite .autor { font-family: Arial, sans-serif; font-size: 17pt; margin: 2em 0 0.5em 0; }         .titelseite .fassung { font-size: 10pt; margin-top: 3em; }         .titelseite .copyright-block { margin-top: auto; text-align: right; font-size: 10pt; padding-top: 3cm; }         .praemisse { text-align: center; font-weight: bold; margin: 2em 0; padding: 1em; }         .figuren { page-break-before: always; }         .figuren h2 { font-family: Arial, sans-serif; font-size: 14pt; margin-bottom: 1em; }         .figur-eintrag { margin-bottom: 1em; }         .figur-name { font-weight: bold; }         .akt-titel { font-size: 21pt; margin: 40pt 0 20pt 0; letter-spacing: 0.5pt; }         .szenen-titel { font-family: Arial, sans-serif; font-size: 14pt; margin: 25pt 0 6pt 0; }         .dialog { display: block; margin-top: 0.6rem; margin-bottom: 0.2rem; }         .dialog .figur { display: block; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10.5pt; margin-bottom: 0.1rem; }         .dialog .text { display: block; margin-left: 0.5cm; }         .regie { font-style: italic; margin-left: 6cm; margin-bottom: 10pt; }         .lied { display: block; margin-left: 2cm; margin-bottom: 2pt; font-style: italic; line-height: 1.3; }         .lied .figur { display: inline; font-weight: bold; font-style: normal; }         .lied .text { display: inline; }         .musik { margin-left: 4cm; padding: 6pt 10pt; color: #7c3aed; font-style: italic; border-left: 3px solid #7c3aed; background: #f5f3ff; margin-bottom: 6pt; }         .sound { margin-left: 4cm; padding: 6pt 10pt; color: #059669; font-style: italic; border-left: 3px solid #059669; background: #ecfdf5; margin-bottom: 6pt; }         @media print { .titelseite { page-break-after: always; } .figuren { page-break-before: always; } }       </style>`);
+      const fmtCss = (f, extra = '') => {
+        const parts = [
+          `font-family: '${f.font}', sans-serif`,
+          `font-size: ${f.size}pt`,
+          `font-weight: ${f.bold ? 'bold' : 'normal'}`,
+          `font-style: ${f.italic ? 'italic' : 'normal'}`,
+          `text-transform: ${f.allCaps ? 'uppercase' : 'none'}`,
+          `letter-spacing: ${f.letterSpacing ? f.letterSpacing + 'em' : 'normal'}`,
+          `text-align: ${f.align || 'left'}`,
+          `margin: ${f.spacingBefore || 0}pt 0 ${f.spacingAfter || 0}pt ${f.indent || 0}cm`,
+          `line-height: ${f.lineHeight || 1.3}`,
+          `color: #${f.color || '212121'}`
+        ];
+        return parts.join('; ') + (extra ? '; ' + extra : '') + ';';
+      };
+      const F = THEATER_FORMATE;
+      const kopfTitel = (typeof (data.fundament?.titel) === 'string' ? data.fundament.titel : (data.fundament?.titel?.titel)) || data.projektName || '';
+      lines.push(`<style>
+        @page {
+          size: A4;
+          margin: 2.5cm 2cm 2cm 2.5cm;
+          @top-right { content: "${kopfTitel.replace(/"/g, '\\"')}   " counter(page) "/" counter(pages); font: italic 9pt 'Trebuchet MS', sans-serif; color: #555; }
+        }
+        body { ${fmtCss(F.standard)} max-width: 17cm; margin: 0 auto; padding: 0; }
+        p { margin: 0; text-align: left; }
+        /* Titelseite */
+        .titelseite { text-align: center; page-break-after: always; min-height: 24cm; display: flex; flex-direction: column; align-items: center; padding-top: 1cm; position: relative; }
+        .titelseite .titelbild { max-width: 10cm; max-height: 12cm; margin: 0 auto 0.8cm; display: block; }
+        .titelseite .titel-block { flex: 0 0 auto; }
+        .titelseite h1 { font-family: 'Georgia', serif; font-size: 28pt; font-weight: bold; margin: 0 0 3pt 0; color: #212121; }
+        .titelseite .untertitel { font-family: 'Georgia', serif; font-size: 13pt; font-style: italic; margin: 0 0 3pt 0; }
+        .titelseite .tagline { font-family: 'Georgia', serif; font-size: 11pt; font-style: italic; color: #555; margin: 0 0 3pt 0; }
+        .titelseite .von { font-family: 'Georgia', serif; font-size: 11pt; margin: 6pt 0 3pt 0; }
+        .titelseite .autor { font-family: 'Georgia', serif; font-size: 14pt; margin: 0 0 3pt 0; }
+        .titelseite .fassung { font-family: 'Trebuchet MS', sans-serif; font-size: 10pt; margin: 0; }
+        .titelseite .copyright-block { margin-top: auto; align-self: flex-end; text-align: right; font-family: 'Trebuchet MS', sans-serif; font-size: 9pt; color: #555; line-height: 1.35; }
+        /* Personen */
+        .figuren { page-break-before: always; }
+        .figuren h2 { ${fmtCss(F.aktTitel)} font-size: 11pt; letter-spacing: 0.2em; margin: 10pt 0 10pt 0; }
+        .figur-eintrag { margin: 6pt 0 1pt 0; }
+        .figur-name { font-family: 'Trebuchet MS', sans-serif; font-weight: bold; font-size: 10pt; }
+        .figur-beschreibung { font-family: 'Georgia', serif; font-style: italic; font-size: 10pt; color: #555; margin: 0 0 4pt 0.5cm; }
+        .schauplatz h2 { ${fmtCss(F.aktTitel)} font-size: 11pt; letter-spacing: 0.2em; margin: 10pt 0 10pt 0; }
+        .szenen-start { page-break-before: always; }
+        /* Text */
+        .akt-titel { ${fmtCss(F.aktTitel)} }
+        .szenen-titel { ${fmtCss(F.szeneTitel)} margin-top: 40pt; margin-bottom: 6pt; page-break-after: avoid; }
+        .ort-zeit { font-family: 'Trebuchet MS', sans-serif; font-size: 9pt; font-weight: bold; font-style: italic; color: #757575; text-align: center; margin: 0 0 10pt 0; padding-bottom: 4pt; border-bottom: 0.5pt solid #ccc; page-break-after: avoid; }
+        .figurenname { ${fmtCss(F.figurenname)} page-break-after: avoid; }
+        .dialog { ${fmtCss(F.dialog)} }
+        .dialog .figur { ${fmtCss(F.figurenname)} display: block; margin-left: -${F.dialog.indent || 0}cm; page-break-after: avoid; }
+        .dialog .text { display: block; }
+        /* Dialog-Abstand kontextabhängig: innerhalb eines Blocks 1 pt, sonst 6 pt */
+        .dialog:has(+ .dialog:not(:has(.figur))) { margin-bottom: 1pt; }
+        .regie { ${fmtCss(F.regieanweisung)} }
+        .regie-inline { font-family: 'Georgia', serif; font-style: italic; color: #414141; }
+        .lied { ${fmtCss(F.lied)} }
+        .lied .figur { font-weight: bold; font-style: normal; }
+        .vers { ${fmtCss(F.vers)} }
+        .pause { ${fmtCss(F.pause)} }
+        .musik { ${fmtCss(F.musik)} }
+        .sound { ${fmtCss(F.sound)} }
+        .nebentext { ${fmtCss(F.nebentext)} }
+        .ende { ${fmtCss(F.aktTitel)} margin-top: 30pt; }
+        @media print { .titelseite { page-break-after: always; } .figuren, .szenen-start { page-break-before: always; } }
+      </style>`);
     }
     
     // Titelblatt - data.fundament.titel ist ein Objekt!
@@ -24143,25 +24486,28 @@ IMPORTANT RULES:
     const adresse = data.autor?.adresse || '';
     
     if (isHtml) {
+      const datumLang = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
       lines.push('<div class="titelseite">');
-      // Titelbild (falls vorhanden)
-      if (titelbild) {
-        lines.push(`<img src="${titelbild}" alt="Cover image" style="max-width: 80%; max-height: 400px; margin-bottom: 2em;" />`);
-      }
+      // Titelbild (falls vorhanden) – sonst nur Text
+      if (titelbild) lines.push(`<img class="titelbild" src="${titelbild}" alt="Cover image" />`);
+      lines.push('<div class="titel-block">');
       lines.push(`<h1>${titel}</h1>`);
       if (untertitel) lines.push(`<p class="untertitel">${untertitel}</p>`);
-      lines.push('<p class="untertitel">by</p>');
-      lines.push(`<p class="autor">${autor}</p>`);
-      lines.push(`<p class="fassung">Version of: ${new Date().toLocaleDateString('en-US')}</p>`);
-      // Copyright rechts unten positioniert, jede Zeile einzeln
-      if (autor || adresse || email || website || copyright) {
+      if (tagline) lines.push(`<p class="tagline">\u201C${tagline}\u201D</p>`);
+      if (autor) {
+        lines.push('<p class="von">by</p>');
+        lines.push(`<p class="autor">${autor}</p>`);
+      }
+      lines.push(`<p class="fassung">Version of: ${datumLang}</p>`);
+      lines.push('</div>');
+      // Rechte-Block rechts unten
+      if (autor || adresse || email || website) {
         lines.push('<div class="copyright-block">');
-        lines.push('<p style="margin: 0;">All rights held by:</p>');
-        lines.push(`<p style="margin: 0;">${autor}</p>`);
-        if (adresse) lines.push(`<p style="margin: 0;">${adresse}</p>`);
-        if (email) lines.push(`<p style="margin: 0;">${email}</p>`);
-        if (website) lines.push(`<p style="margin: 0;">${website}</p>`);
-        lines.push(`<p style="margin: 0;">© ${new Date().getFullYear()} ${autor}</p>`);
+        lines.push('<p>All rights held by:</p>');
+        if (autor) lines.push(`<p>${autor}</p>`);
+        if (adresse) adresse.split(/\s*[\n,]\s*/).filter(Boolean).forEach(l => lines.push(`<p>${l}</p>`));
+        if (email) lines.push(`<p>${email}</p>`);
+        if (website) lines.push(`<p>${website}</p>`);
         lines.push('</div>');
       }
       lines.push('</div>');
@@ -24174,19 +24520,21 @@ IMPORTANT RULES:
       lines.push('\n' + '═'.repeat(50));
     }
     
-    // Prämisse/Tagline
-    if (tagline) {
-      lines.push(isHtml ? `<p class="praemisse">"${tagline}"</p>` : `\n\n"${tagline}"\n`);
+    // Prämisse/Tagline (im HTML bereits auf der Titelseite)
+    if (tagline && !isHtml) {
+      lines.push(`\n\n"${tagline}"\n`);
     }
     
     // Figurenverzeichnis
     if (data.figuren && data.figuren.length > 0) {
-      lines.push(isHtml ? '<div class="figuren"><h2>The characters</h2>' : '\n\nTHE CHARACTERS\n');
+      lines.push(isHtml ? '<div class="figuren"><h2>Characters</h2>' : '\n\nTHE CHARACTERS\n');
       data.figuren.forEach(figur => {
-        const name = (figur.name || 'Untitled').toUpperCase();
-        const beschreibung = figur.beschreibung || figur.wesen || '';
+        const name = (figur.name || 'Unnamed').toUpperCase();
+        const fb = figurenBeschrieb(figur);
+        const beschreibung = [fb.kurz, fb.text].filter(Boolean).join(' – ');
         if (isHtml) {
-          lines.push(`<p class="figur-eintrag"><span class="figur-name">${name}:</span> ${beschreibung}</p>`);
+          lines.push(`<p class="figur-eintrag"><span class="figur-name">${name}</span></p>`);
+          if (beschreibung) lines.push(`<p class="figur-beschreibung">${beschreibung}</p>`);
         } else {
           lines.push(`\n${name}: ${beschreibung}`);
         }
@@ -24205,27 +24553,28 @@ IMPORTANT RULES:
     // Szenen (aus Zeitstrahl/Felder)
     if (data.felder && data.felder.length > 0) {
       let currentAkt = '';
+      if (isHtml) lines.push('<div class="szenen-start"></div>');
       
       data.felder.forEach((feld, idx) => {
         // Akt-Wechsel erkennen
         if (feld.akt && feld.akt !== currentAkt) {
           currentAkt = feld.akt;
-          lines.push(isHtml ? `<p class="akt-titel">${feld.akt.toUpperCase()}</p>` : `\n\n\n${feld.akt.toUpperCase()}\n`);
+          lines.push(isHtml ? `<p class="akt-titel">${feld.akt}</p>` : `\n\n\n${feld.akt.toUpperCase()}\n`);
         }
         
-        // Szenen-Titel
+        // Szenen-Titel (wie DOCX: «3. Titel», Nummer kommt von der App)
         const szenenNr = feld.nummer || (idx + 1);
-        const szenenTitel = feld.titel || '';
+        const szenenTitel = stripSzenenNummer(feld.titel || '') || 'Scene';
         if (isHtml) {
-          lines.push(`<p class="szenen-titel">Scene ${szenenNr}${szenenTitel ? ' – ' + szenenTitel : ''}</p>`);
+          lines.push(`<p class="szenen-titel">${szenenNr}. ${szenenTitel}</p>`);
         } else {
-          lines.push(`\n${szenenNr}. Scene${szenenTitel ? ' – ' + szenenTitel : ''}`);
+          lines.push(`\n${szenenNr}. ${szenenTitel}`);
         }
         
-        // Ort/Zeit als Regieanweisung
+        // Ort/Zeit
         if (feld.ort || feld.zeit) {
-          const meta = `(${[feld.ort, feld.zeit].filter(Boolean).join(' – ')})`;
-          lines.push(isHtml ? `<p class="regie">${meta}</p>` : `\n        ${meta}`);
+          const meta = [feld.ort, feld.zeit].filter(Boolean).join(' · ');
+          lines.push(isHtml ? `<p class="ort-zeit">${meta}</p>` : `\n        (${meta})`);
         }
         
         // Inhalt/Dialoge - mit korrekter Formatierung
@@ -24240,6 +24589,10 @@ IMPORTANT RULES:
               const classes = el.className || '';
               const text = el.textContent?.trim() || '';
               
+              if (!text) continue;
+              // Inline-Regie (Klammertext) im Dialog kursiv
+              const inlineRegie = (t) => t.replace(/(\([^)]{2,}\))/g, '<span class="regie-inline">$1</span>');
+
               if (classes.includes('fmt-dialog')) {
                 // Dialog mit Figurenname und Text
                 const figurSpan = el.querySelector('.figur');
@@ -24248,12 +24601,27 @@ IMPORTANT RULES:
                 const dialogText = textSpan?.textContent?.trim() || text;
                 
                 if (isHtml) {
-                  lines.push(`<p class="dialog"><span class="figur">${figurName}</span> <span class="text">${dialogText}</span></p>`);
+                  // Figur-Span nur bei Sprecherwechsel – so greift die 1-pt-Regel für Fortsetzungszeilen
+                  lines.push(`<p class="dialog">${figurName ? `<span class="figur">${figurName}</span>` : ''}<span class="text">${inlineRegie(dialogText)}</span></p>`);
                 } else {
                   lines.push(`\n${figurName.padEnd(15)}${dialogText}`);
                 }
+              } else if (classes.includes('fmt-figurenname')) {
+                lines.push(isHtml ? `<p class="figurenname">${text}</p>` : `\n${text}`);
               } else if (classes.includes('fmt-regie')) {
                 lines.push(isHtml ? `<p class="regie">${text}</p>` : `\n                              ${text}`);
+              } else if (classes.includes('fmt-akt-titel')) {
+                lines.push(isHtml ? `<p class="akt-titel">${text}</p>` : `\n\n${text.toUpperCase()}\n`);
+              } else if (classes.includes('fmt-szenen-titel')) {
+                lines.push(isHtml ? `<p class="szenen-titel">${text}</p>` : `\n${text}`);
+              } else if (classes.includes('fmt-vers')) {
+                lines.push(isHtml ? `<p class="vers">${text}</p>` : `\n    ${text}`);
+              } else if (classes.includes('fmt-pause')) {
+                lines.push(isHtml ? `<p class="pause">${text}</p>` : `\n\n— ${text.toUpperCase()} —\n`);
+              } else if (classes.includes('fmt-nebentext')) {
+                lines.push(isHtml ? `<p class="nebentext">${text}</p>` : `\n${text}`);
+              } else if (classes.includes('fmt-notiz')) {
+                // Regie-Notizen werden nicht gedruckt
               } else if (classes.includes('fmt-lied')) {
                 const figurSpan = el.querySelector('.figur');
                 const textSpan = el.querySelector('.text');
@@ -24287,7 +24655,7 @@ IMPORTANT RULES:
       lines.push(isHtml ? '<p>(No scenes written yet)</p>' : '\n(No scenes written yet)');
     }
     
-    lines.push(isHtml ? '<p style="text-align: center; margin-top: 3em;"><strong>END</strong></p>' : '\n\nENDE');
+    lines.push(isHtml ? '<p class="ende">The End</p>' : '\n\nTHE END');
     
     return lines.join('\n');
   };
@@ -24456,7 +24824,7 @@ IMPORTANT RULES:
             }
             if (!window.docx) throw new Error('The docx library could not be loaded.');
           }
-          const { Document: DocxDoc, Packer, Paragraph, TextRun, AlignmentType, PageBreak, BorderStyle } = window.docx;
+          const { Document: DocxDoc, Packer, Paragraph, TextRun, AlignmentType, PageBreak, BorderStyle, Header, PageNumber, ImageRun, FrameAnchorType, HorizontalPositionAlign } = window.docx;
           const dc = [];
 
           // Inline-Regie: Klammertexte im Dialog als Georgia/kursiv
@@ -24474,7 +24842,7 @@ IMPORTANT RULES:
           };
 
           // Absatz mit Style-Referenz erstellen
-          const addStyledPara = (text, styleName, figurName) => {
+          const addStyledPara = (text, styleName, figurName, spacingOverride) => {
             if (!text?.trim()) return;
             text = text.trim();
             const fontMap = { Dialog: 'Trebuchet MS', FigurName: 'Trebuchet MS', Regieanweisung: 'Georgia', SzenenTitel: 'Georgia', AktTitel: 'Trebuchet MS', Lied: 'Trebuchet MS', Vers: 'Trebuchet MS', Pause: 'Trebuchet MS', Musik: 'Georgia', Sound: 'Georgia', Nebentext: 'Georgia', Standard: 'Trebuchet MS' };
@@ -24492,7 +24860,8 @@ IMPORTANT RULES:
             }
             dc.push(new Paragraph({
               children: splitInlineRegie(text, styleName, font, size, color),
-              style: styleName
+              style: styleName,
+              ...(spacingOverride ? { spacing: spacingOverride } : {})
             }));
           };
 
@@ -24507,52 +24876,89 @@ IMPORTANT RULES:
             const stEmail = data.autor?.email || '';
             const stWebsite = data.autor?.website || '';
 
-            // Titelseite
-            dc.push(new Paragraph({ spacing: { before: 2000 }, children: [] }));
-            dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [
-              new TextRun({ text: stTitel, font: 'Georgia', size: 52, bold: true, color: '212121' })
+            // Titelseite (Vorlage: Bild oben, Titelblock zentriert, Rechte-Block rechts unten)
+            const stTitelbild = titelObj.titelbild || '';
+            const stDatumLang = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Titelbild – base64 → Bytes, auf max. 10 × 12 cm skaliert
+            if (stTitelbild && /^data:image\//.test(stTitelbild)) {
+              try {
+                const b64 = stTitelbild.split(',')[1];
+                const bin = atob(b64);
+                const bytes = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                const dims = await new Promise((resolve) => {
+                  const im = new Image();
+                  im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+                  im.onerror = () => resolve(null);
+                  im.src = stTitelbild;
+                });
+                if (dims && dims.w && dims.h) {
+                  const maxW = 378, maxH = 454; // 10 cm × 12 cm bei 96 dpi
+                  const k = Math.min(maxW / dims.w, maxH / dims.h, 1);
+                  dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600, after: 400 }, children: [
+                    new ImageRun({ data: bytes, transformation: { width: Math.round(dims.w * k), height: Math.round(dims.h * k) } })
+                  ]}));
+                }
+              } catch (e) { console.warn('Title image could not be embedded in DOCX:', e); }
+            } else {
+              dc.push(new Paragraph({ spacing: { before: 4000 }, children: [] }));
+            }
+
+            dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [
+              new TextRun({ text: stTitel, font: 'Georgia', size: 56, bold: true, color: '212121' })
             ]}));
-            if (stUntertitel) dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 360 }, children: [
+            if (stUntertitel) dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [
               new TextRun({ text: stUntertitel, font: 'Georgia', size: 26, italics: true, color: '212121' })
             ]}));
-            if (stTagline) dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [
-              new TextRun({ text: `\u00AB${stTagline}\u00BB`, font: 'Georgia', size: 22, italics: true, color: '555555' })
+            if (stTagline) dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [
+              new TextRun({ text: `\u201C${stTagline}\u201D`, font: 'Georgia', size: 22, italics: true, color: '555555' })
             ]}));
             if (stAutor) {
-              dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [new TextRun({ text: 'von', font: 'Georgia', size: 22, color: '212121' })] }));
-              dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 600 }, children: [new TextRun({ text: stAutor, font: 'Georgia', size: 28, color: '212121' })] }));
+              dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120, after: 60 }, children: [new TextRun({ text: 'by', font: 'Georgia', size: 22, color: '212121' })] }));
+              dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [new TextRun({ text: stAutor, font: 'Georgia', size: 28, color: '212121' })] }));
             }
-            const metaLines = [];
-            metaLines.push(`Version of: ${new Date().toLocaleDateString('en-US')}`);
-            if (stAutor || stAdresse || stEmail) {
-              metaLines.push('');
-              metaLines.push('All rights held by:');
-              if (stAutor) metaLines.push(stAutor);
-              if (stAdresse) metaLines.push(stAdresse);
-              if (stEmail) metaLines.push(stEmail);
-              if (stWebsite) metaLines.push(stWebsite);
-              metaLines.push(`© ${new Date().getFullYear()} ${stAutor}`);
+            dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 0 }, children: [
+              new TextRun({ text: `Version of: ${stDatumLang}`, font: 'Trebuchet MS', size: 20, color: '212121' })
+            ]}));
+
+            // Rechte-Block: rechtsbündig, am unteren Seitenrand verankert (Rahmen)
+            if (stAutor || stAdresse || stEmail || stWebsite) {
+              const rechteLines = ['All rights held by:'];
+              if (stAutor) rechteLines.push(stAutor);
+              if (stAdresse) stAdresse.split(/\s*[\n,]\s*/).filter(Boolean).forEach(l => rechteLines.push(l));
+              if (stEmail) rechteLines.push(stEmail);
+              if (stWebsite) rechteLines.push(stWebsite);
+              const rechteHoehe = rechteLines.length * 260 + 200;
+              dc.push(new Paragraph({
+                frame: {
+                  position: { x: 0, y: 14264 - rechteHoehe },
+                  width: 9354, height: rechteHoehe,
+                  anchor: { horizontal: FrameAnchorType.MARGIN, vertical: FrameAnchorType.MARGIN },
+                  alignment: { x: HorizontalPositionAlign.RIGHT }
+                },
+                alignment: AlignmentType.RIGHT,
+                spacing: { line: 260 },
+                children: rechteLines.map((line, i) => {
+                  const runs = [new TextRun({ text: line, size: 18, color: '555555', font: 'Trebuchet MS' })];
+                  if (i < rechteLines.length - 1) runs.push(new TextRun({ break: 1 }));
+                  return runs;
+                }).flat()
+              }));
             }
-            dc.push(new Paragraph({
-              children: metaLines.map((line, i) => {
-                const runs = [new TextRun({ text: line, size: 18, color: '888888', font: 'Trebuchet MS' })];
-                if (i < metaLines.length - 1) runs.push(new TextRun({ break: 1 }));
-                return runs;
-              }).flat(),
-              alignment: AlignmentType.CENTER,
-              spacing: { before: 400 }
-            }));
             dc.push(new Paragraph({ children: [new PageBreak()] }));
 
             // Personenliste
             if (data.figuren?.length > 0) {
-              dc.push(new Paragraph({ children: [new TextRun({ text: 'PERSONEN', bold: true, size: 22, font: 'Trebuchet MS', allCaps: true, characterSpacing: 24, color: '212121' })], alignment: AlignmentType.CENTER, spacing: { before: 200, after: 200 } }));
+              dc.push(new Paragraph({ children: [new TextRun({ text: 'CHARACTERS', bold: true, size: 22, font: 'Trebuchet MS', allCaps: true, characterSpacing: 24, color: '212121' })], alignment: AlignmentType.CENTER, spacing: { before: 200, after: 200 } }));
               data.figuren.forEach(f => {
+                const fb = figurenBeschrieb(f);
                 dc.push(new Paragraph({ spacing: { before: 120, after: 20 }, children: [
-                  new TextRun({ text: f.name.toUpperCase(), bold: true, size: 20, font: 'Trebuchet MS', color: '212121' })
+                  new TextRun({ text: (f.name || 'Unnamed').toUpperCase(), bold: true, size: 20, font: 'Trebuchet MS', color: '212121' }),
+                  ...(fb.kurz ? [new TextRun({ text: '  ' + fb.kurz, size: 18, font: 'Trebuchet MS', color: '757575' })] : [])
                 ]}));
-                if (f.beschreibung) dc.push(new Paragraph({ spacing: { after: 80 }, indent: { left: 280 }, children: [
-                  new TextRun({ text: f.beschreibung, size: 20, font: 'Georgia', italics: true, color: '555555' })
+                if (fb.text) dc.push(new Paragraph({ spacing: { after: 80 }, indent: { left: 280 }, children: [
+                  new TextRun({ text: fb.text, size: 20, font: 'Georgia', italics: true, color: '555555' })
                 ]}));
               });
               dc.push(new Paragraph({ spacing: { before: 300 }, children: [] }));
@@ -24560,7 +24966,7 @@ IMPORTANT RULES:
 
             // Schauplatz
             if (data.schauplatz?.hauptort || data.schauplatz?.notizen) {
-              dc.push(new Paragraph({ spacing: { before: 200, after: 200 }, children: [new TextRun({ text: 'SCHAUPLATZ', bold: true, size: 22, font: 'Trebuchet MS', allCaps: true, characterSpacing: 24, color: '212121' })] }));
+              dc.push(new Paragraph({ spacing: { before: 200, after: 200 }, children: [new TextRun({ text: 'SETTING', bold: true, size: 22, font: 'Trebuchet MS', allCaps: true, characterSpacing: 24, color: '212121' })] }));
               if (data.schauplatz.hauptort) dc.push(new Paragraph({ children: [new TextRun({ text: data.schauplatz.hauptort, font: 'Trebuchet MS', size: 22 })] }));
               if (data.schauplatz.notizen) dc.push(new Paragraph({ children: [new TextRun({ text: data.schauplatz.notizen, font: 'Georgia', size: 20, italics: true, color: '555555' })] }));
             }
@@ -24578,7 +24984,7 @@ IMPORTANT RULES:
                 }
 
                 // Szenen-Titel
-                dc.push(new Paragraph({ children: [new TextRun({ text: `${feld.nummer || (idx + 1)}. ${feld.titel || 'Scene'}`, bold: true, size: 24, font: 'Georgia', color: '212121' })], alignment: AlignmentType.CENTER, style: 'SzenenTitel' }));
+                dc.push(new Paragraph({ children: [new TextRun({ text: `${feld.nummer || (idx + 1)}. ${stripSzenenNummer(feld.titel || '') || 'Scene'}`, bold: true, size: 24, font: 'Georgia', color: '212121' })], alignment: AlignmentType.CENTER, style: 'SzenenTitel' }));
 
                 // Ort/Zeit
                 if (feld.ort || feld.zeit) {
@@ -24588,17 +24994,20 @@ IMPORTANT RULES:
                   }));
                 }
 
-                dc.push(new Paragraph({ spacing: { before: 80 }, children: [] }));
-
                 // Inhalt parsen
                 const inhalt = feld.inhalt || '';
                 if (inhalt) {
                   const tempDiv = document.createElement('div');
                   tempDiv.innerHTML = inhalt;
-                  for (const el of tempDiv.children) {
+                  const els = Array.from(tempDiv.children).filter(e => (e.textContent || '').trim());
+                  // Dialog-Abstand ist kontextabhängig: Folgt auf einen Dialog-Absatz ein weiterer
+                  // Dialog-Absatz derselben Figur (ohne neuen Figurennamen), nur 1 pt Abstand;
+                  // folgt Regieanweisung, Figurenname o. Ä., 6 pt (Vorlage: Pages «Bourbaki»).
+                  const istDialogFortsetzung = (e) => !!e && (e.className || '').includes('fmt-dialog') && !e.querySelector('.figur');
+                  for (let ei = 0; ei < els.length; ei++) {
+                    const el = els[ei];
                     const cls = el.className || '';
                     const txt = el.textContent?.trim() || '';
-                    if (!txt) continue;
 
                     if (cls.includes('fmt-akt-titel')) { addStyledPara(txt, 'AktTitel'); }
                     else if (cls.includes('fmt-szenen-titel')) { addStyledPara(txt, 'SzenenTitel'); }
@@ -24606,8 +25015,9 @@ IMPORTANT RULES:
                     else if (cls.includes('fmt-dialog')) {
                       const figurSpan = el.querySelector('.figur');
                       const textSpan = el.querySelector('.text');
-                      if (figurSpan) addStyledPara(textSpan?.textContent || txt, 'Dialog', figurSpan.textContent);
-                      else addStyledPara(txt, 'Dialog');
+                      const dialogAfter = istDialogFortsetzung(els[ei + 1]) ? 20 : 120;
+                      if (figurSpan) addStyledPara(textSpan?.textContent || txt, 'Dialog', figurSpan.textContent, { after: dialogAfter });
+                      else addStyledPara(txt, 'Dialog', null, { after: dialogAfter });
                     }
                     else if (cls.includes('fmt-regie')) { addStyledPara(txt, 'Regieanweisung'); }
                     else if (cls.includes('fmt-lied')) { addStyledPara(txt, 'Lied'); }
@@ -24624,7 +25034,7 @@ IMPORTANT RULES:
               });
             }
             dc.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600 }, children: [
-              new TextRun({ text: 'ENDE', font: 'Trebuchet MS', size: 36, bold: true, allCaps: true, characterSpacing: 40 })
+              new TextRun({ text: 'THE END', font: 'Trebuchet MS', size: 36, bold: true, allCaps: true, characterSpacing: 40 })
             ]}));
 
           } else {
@@ -24695,10 +25105,10 @@ IMPORTANT RULES:
                   paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 600, after: 240 } } },
                 { id: 'SzenenTitel', name: 'Scene title', basedOn: 'Normal', next: 'Normal',
                   run: { font: 'Georgia', bold: true, size: 24, color: '212121' },
-                  paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 360, after: 360 } } },
+                  paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 800, after: 120 }, keepNext: true } },
                 { id: 'OrtZeit', name: 'Place-time', basedOn: 'Normal', next: 'Normal',
                   run: { font: 'Trebuchet MS', bold: true, italics: true, size: 18, color: '757575' },
-                  paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 80, after: 200 },
+                  paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 0, after: 120 }, keepNext: true,
                     border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 4 } } } },
                 { id: 'Pause', name: 'Pause', basedOn: 'Normal', next: 'Normal',
                   run: { font: 'Trebuchet MS', bold: true, size: 24, color: '888888' },
@@ -24718,8 +25128,17 @@ IMPORTANT RULES:
               ]
             },
             sections: [{ properties: {
-              page: { margin: { top: 1440, right: 1134, bottom: 1134, left: 1418 } }
-            }, children: dc }]
+              page: { margin: { top: 1440, right: 1134, bottom: 1134, left: 1418, header: 708 } }
+            },
+            // Kopfzeile rechts: Kurztitel kursiv + Seite/Total
+            headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
+              new TextRun({ text: title, italics: true, size: 18, font: 'Trebuchet MS', color: '555555' }),
+              new TextRun({ text: '   ', size: 18 }),
+              new TextRun({ children: [PageNumber.CURRENT], size: 18, font: 'Trebuchet MS', color: '555555' }),
+              new TextRun({ text: '/', size: 18, font: 'Trebuchet MS', color: '555555' }),
+              new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 18, font: 'Trebuchet MS', color: '555555' })
+            ]})] }) },
+            children: dc }]
           });
           const blob = await Packer.toBlob(docxDoc);
           const url = URL.createObjectURL(blob);
@@ -26398,6 +26817,44 @@ STYLE:
     }));
   };
 
+  // Projekt-Menü (Öffnen, Sichern, Einstellungen, Dokumente …)
+  // Wird in der Material-Sidebar UND im Schreibtisch angezeigt.
+  const renderProjectMenu = () => (
+    <div className="sidebar-project-menu">
+      <button className="project-dropdown-btn" onClick={() => setShowMenu(!showMenu)}>
+        <span className="project-icon">📁</span>
+        <span className="project-name-sidebar">{data.projektName || 'New project'}</span>
+        <span className="dropdown-arrow">▼</span>
+      </button>
+      {showMenu && (
+        <div className="sidebar-menu-dropdown">
+          {/* ===== PROJEKT ===== */}
+          <div className="sidebar-menu-section">📁 PROJECT</div>
+          <button className="sidebar-menu-item" onClick={() => { newProject(); setShowMenu(false); }}>📄 New...</button>
+          <button className="sidebar-menu-item" onClick={() => { loadDemo(); setShowMenu(false); }}>🎭 Demo: Romeo & Juliet</button>
+          <button className="sidebar-menu-item" onClick={() => { saveToFile(); setShowMenu(false); }}>{'\ud83d\udcbe'} Save <span style={{float:'right',color:'#999',fontSize:'0.8em'}}>{'\u2318'}S</span></button>
+
+          <div className="sidebar-menu-divider" />
+
+          {/* Öffnen, Sichern unter, Backup & Teilen → alles im Import/Export-Fenster */}
+          <button className="sidebar-menu-item" onClick={() => { setShowImportExportModal(true); setShowMenu(false); }}>🔄 Open, save as & share...</button>
+          
+          <div className="sidebar-menu-divider" />
+          <button className="sidebar-menu-item" onClick={() => { setShowSettings(true); setShowMenu(false); }}>⚙️ Settings...</button>
+          
+          {/* ===== DOKUMENTE ===== */}
+          <div className="sidebar-menu-divider" style={{marginTop: '0.75rem'}} />
+          <div className="sidebar-menu-section">📄 DOCUMENTS</div>
+          <button className="sidebar-menu-item" onClick={() => { openExportDialog('stuecktext'); setShowMenu(false); }}>📝 Play text</button>
+          <button className="sidebar-menu-item" onClick={() => { openExportDialog('treatment'); setShowMenu(false); }}>📋 Treatment (from project)</button>
+          <button className="sidebar-menu-item" onClick={() => { openExportDialog('materialien'); setShowMenu(false); }}>📚 Research (as document)</button>
+          <button className="sidebar-menu-item" onClick={() => { exportGesamtdokument(); setShowMenu(false); }}>🗂️ Full overview (Word)</button>
+          <button className="sidebar-menu-item" onClick={() => { setShowDossierAssistent(true); setShowMenu(false); }}>📑 Funding dossier</button>
+        </div>
+      )}
+    </div>
+  );
+
   // Material-Sidebar
   const renderMaterialSidebar = () => (
     <aside className="material-sidebar" style={{ width: `${materialSidebarWidth}px` }}>
@@ -26409,41 +26866,9 @@ STYLE:
         <button className="dashboard-header-btn" onClick={() => setShowDashboard(true)} title="Project overview / dashboard">📊 Overview</button>
       </div>
       
-      {/* Projekt-Dropdown mit Menü */}
-      <div className="sidebar-project-menu">
-        <button className="project-dropdown-btn" onClick={() => setShowMenu(!showMenu)}>
-          <span className="project-icon">📁</span>
-          <span className="project-name-sidebar">{data.projektName || 'New project'}</span>
-          <span className="dropdown-arrow">▼</span>
-        </button>
-        {showMenu && (
-          <div className="sidebar-menu-dropdown">
-            {/* ===== PROJEKT ===== */}
-            <div className="sidebar-menu-section">📁 PROJECT</div>
-            <button className="sidebar-menu-item" onClick={() => { newProject(); setShowMenu(false); }}>📄 New...</button>
-            <button className="sidebar-menu-item" onClick={() => { loadDemo(); setShowMenu(false); }}>🎭 Demo: Romeo & Juliet</button>
-            <button className="sidebar-menu-item" onClick={() => { saveToFile(); setShowMenu(false); }}>{'\ud83d\udcbe'} Save <span style={{float:'right',color:'#999',fontSize:'0.8em'}}>{'\u2318'}S</span></button>
+      {/* Projekt-Dropdown mit Menü (geteilt mit Schreibtisch) */}
+      {renderProjectMenu()}
 
-            <div className="sidebar-menu-divider" />
-
-            {/* Öffnen, Sichern unter, Backup & Teilen → alles im Import/Export-Fenster */}
-            <button className="sidebar-menu-item" onClick={() => { setShowImportExportModal(true); setShowMenu(false); }}>🔄 Open, save as & share...</button>
-            
-            <div className="sidebar-menu-divider" />
-            <button className="sidebar-menu-item" onClick={() => { setShowSettings(true); setShowMenu(false); }}>⚙️ Settings...</button>
-            
-            {/* ===== DOKUMENTE ===== */}
-            <div className="sidebar-menu-divider" style={{marginTop: '0.75rem'}} />
-            <div className="sidebar-menu-section">📄 DOCUMENTS</div>
-            <button className="sidebar-menu-item" onClick={() => { openExportDialog('stuecktext'); setShowMenu(false); }}>📝 Play text</button>
-            <button className="sidebar-menu-item" onClick={() => { openExportDialog('treatment'); setShowMenu(false); }}>📋 Treatment (from project)</button>
-            <button className="sidebar-menu-item" onClick={() => { openExportDialog('materialien'); setShowMenu(false); }}>📚 Research (as document)</button>
-            <button className="sidebar-menu-item" onClick={() => { exportGesamtdokument(); setShowMenu(false); }}>🗂️ Full overview (Word)</button>
-            <button className="sidebar-menu-item" onClick={() => { setShowDossierAssistent(true); setShowMenu(false); }}>📑 Funding dossier</button>
-          </div>
-        )}
-      </div>
-      
       <h2 className="sidebar-title">MATERIAL</h2>
       {['figuren', 'themen', 'szenenIdeen'].map(type => (
         <div key={type} className="sidebar-section">
@@ -35645,6 +36070,32 @@ STYLE:
           flex-direction: column;
           overflow: hidden;
         }
+        /* Logo + Projekt-Menü oben in der Schreibtisch-Navigation */
+        .schreibtisch-nav-projekt {
+          padding: 0.75rem 0.75rem 0.25rem;
+          border-bottom: 1px solid #e0dbd2;
+          text-align: center;
+        }
+        .schreibtisch-nav-projekt img {
+          width: 96px;
+          height: auto;
+          margin-bottom: 0.5rem;
+          border-radius: 4px;
+        }
+        .schreibtisch-nav-projekt .sidebar-project-menu {
+          margin-bottom: 0.5rem;
+          text-align: left;
+        }
+        .schreibtisch-nav-projekt .project-dropdown-btn {
+          background: #f5f0eb;
+          color: #4a4540;
+          border-color: #d1cdc6;
+        }
+        .schreibtisch-nav-projekt .project-dropdown-btn:hover {
+          background: #ede6dd;
+        }
+        /* Suchen & Ersetzen: gelbe Markierung des aktuellen Treffers auf dem Blatt */
+        .schreibtisch-suche-marker { position: absolute; background: rgba(250, 204, 21, 0.45); border-radius: 2px; pointer-events: none; z-index: 5; }
         .schreibtisch-nav-header {
           padding: 0.75rem 1rem;
           border-bottom: 1px solid #e0dbd2;
@@ -35768,6 +36219,11 @@ STYLE:
           padding: 2.5cm 2.5cm 3cm 2.5cm;
           margin-bottom: 2rem;
           min-height: 29.7cm;
+          height: auto;
+          /* Im Flex-Container (.schreibtisch-main) darf das Blatt nicht auf
+             min-height zusammengedrückt werden – sonst läuft der Text unten
+             über das weisse Papier hinaus auf den beigen Hintergrund. */
+          flex-shrink: 0;
           position: relative;
         }
 
@@ -35873,6 +36329,11 @@ STYLE:
         }
         .schreibtisch-page .format-dialog + .format-dialog {
           margin-top: 0;
+        }
+        /* Dialog-Abstand kontextabhängig (wie im DOCX-Export):
+           innerhalb eines Dialogblocks 1 pt, vor Regieanweisung/Figurenname 6 pt */
+        .schreibtisch-page .format-dialog:has(+ .format-dialog:not(:has(.figur-name))) {
+          margin-bottom: 1pt;
         }
         .schreibtisch-page .format-dialog + .format-figurenname {
           margin-top: 5pt;
@@ -38230,6 +38691,8 @@ DONE GATHERING? Switch to "Ordering" and build the timeline.
               addFeld={addFeld}
               apiKey={apiKey}
               sparringWithAI={sparringWithAI}
+              projectMenu={renderProjectMenu()}
+              onExportPdf={() => executeExport('stuecktext', 'pdf')}
               onExportDocx={() => executeExport('stuecktext', 'docx')}
             />
           )}
