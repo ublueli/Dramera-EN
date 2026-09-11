@@ -36162,7 +36162,10 @@ STYLE:
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 2rem 1rem;
+          /* No top padding: otherwise the sticky toolbar sticks 2rem below
+             the edge and the text visibly scrolls past above it.
+             The top spacing is the toolbar's margin-top instead. */
+          padding: 0 1rem 2rem;
         }
 
         /* Kopfzeile */
@@ -36609,6 +36612,7 @@ STYLE:
           border: 1px solid #e2e8f0;
           border-radius: 0.5rem;
           padding: 0.35rem 0.75rem;
+          margin-top: 2rem;
           margin-bottom: 1rem;
           display: flex;
           align-items: center;
